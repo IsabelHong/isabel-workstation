@@ -1,0 +1,46 @@
+name: 部署到 GitHub Pages
+
+# 触发条件：
+#   1) 推送到 main 分支（你上传/更新文件后自动上线）
+#   2) 手动在 Actions 页面点击 Run workflow
+#   3) 每日 11:00（北京时间）自动重新部署一次 —— 即「每日保活」，
+#      静态站点本不会被回收，此任务仅确保站点配置/缓存始终最新。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'   # UTC 03:00 = 北京 11:00
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 配置 Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true   # 首次运行自动开启 Pages 托管（Source = GitHub Actions），无需手动去设置页点选
+
+      - name: 打包站点产物（仓库根目录即站点文件）
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: 发布到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

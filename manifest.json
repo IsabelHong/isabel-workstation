@@ -1,0 +1,24 @@
+{
+  "name": "Isabel 工作台",
+  "short_name": "Isabel",
+  "description": "Isabel的每日工作台 - 任务管理、客户接待、小红书发布、学习摘录",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f3ef",
+  "theme_color": "#8e5fc0",
+  "icons": [
+    {
+      "src": "./icon-192-purple.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512-purple.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

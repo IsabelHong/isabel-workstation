@@ -1,0 +1,30 @@
+name: 保活 · 就绪加密备份分支
+
+# 每日确保名为 `backup` 的分支存在。
+# 工作台App的「GitHub 加密备份」会把加密数据提交到该分支（与主站点的 main 分支隔离，
+# 因此自动备份不会触发站点重新部署、也不会污染主分支）。
+# 若该分支不存在，首次备份会由 App 自动创建；此任务作为兜底，避免因分支缺失导致备份失败。
+on:
+  schedule:
+    - cron: '30 3 * * *'   # UTC 03:30 = 北京 11:30
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ensure-backup-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 确保 backup 分支存在
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          repo="${{ github.repository }}"
+          if gh api "repos/$repo/branches/backup" >/dev/null 2>&1; then
+            echo "backup 分支已存在 ✅"
+          else
+            echo "创建 backup 分支…"
+            main_sha=$(gh api "repos/$repo/git/ref/heads/main" --jq '.object.sha')
+            gh api "repos/$repo/git/refs" -f ref="refs/heads/backup" -f sha="$main_sha" || echo "创建失败（不影响使用，App 会在首次备份时自建）"
+          fi
