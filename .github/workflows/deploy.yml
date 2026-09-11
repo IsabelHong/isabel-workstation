@@ -31,10 +31,11 @@ jobs:
       - name: 检出仓库
         uses: actions/checkout@v4
 
+      # 注意：GitHub 不允许工作流自动创建 Pages 站点（会报 Resource not accessible by integration）。
+      # 首次使用必须由仓库主人在 Settings → Pages → Source 手动选一次「GitHub Actions」，
+      # 之后本工作流即可全自动部署，无需再手动操作。
       - name: 配置 Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true   # 首次运行自动开启 Pages 托管（Source = GitHub Actions），无需手动去设置页点选
 
       - name: 打包站点产物（仓库根目录即站点文件）
         uses: actions/upload-pages-artifact@v3
