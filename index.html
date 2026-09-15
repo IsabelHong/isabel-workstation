@@ -2927,7 +2927,7 @@
 
 <script>
 // 当前版本号（每次发布递增）。用于侧栏显示 + Service Worker 更新提示。
-const APP_VERSION = 'v63';
+const APP_VERSION = 'v64';
 
 // 全局错误捕获：任何 JS 报错都显示到屏幕顶部红条，避免「点了没反应」却不知原因
 window.addEventListener('error', function (e) {
@@ -8266,7 +8266,7 @@ if ('serviceWorker' in navigator) {
     // 注意：必须用「带版本号的文件名」注册。平台 CDN 会缓存旧的 sw.js，
     // 若沿用同一文件名，用户端永远拉不到新的 Service Worker（离线能力无法更新）。
     // 每次升级 APP_VERSION 时，请同步创建/更新 sw-v59.js 并改这里。
-    navigator.serviceWorker.register('./sw-v63.js').then(reg => {
+    navigator.serviceWorker.register('./sw-v64.js').then(reg => {
       // 已有旧 SW 在控制页面，而新 SW 已就绪 → 提示更新
       if (reg.waiting && navigator.serviceWorker.controller) {
         showUpdateBanner();
@@ -8336,6 +8336,6 @@ window.IWApp = {
   <div class="lb-hint" data-page-node-id="k7S4jERrDovnAyUE08pV0r">双指捏合缩放 · 拖动平移 · 双击放大/还原 · 点空白处关闭</div>
 </div>
 
-<script src="iw-sync.js?v=63"></script>
+<script src="iw-sync.js?v=64"></script>
 </body>
 </html>

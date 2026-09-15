@@ -1,5 +1,5 @@
 /* ============================================================================
- * Isabel 工作台 · 云同步模块 (iw-sync.js)  v63
+ * Isabel 工作台 · 云同步模块 (iw-sync.js)  v64
  * 功能：把工作台数据用「密码 AES-256-GCM 加密」后备份到 GitHub 私有仓库，
  *      并在其他端（公司/家里/手机）打开时自动拉取合并，实现跨端保密同步。
  * 设计原则：
@@ -7,6 +7,14 @@
  *   - 数据在本地加密后才上传，GitHub 上只存密文，仓库管理员无密码也读不到。
  *   - 密码仅用于加解密，从不上传；Token 仅用于读写你自己的私有仓库。
  *   - 非侵入式：通过 window.IWApp 桥接访问主程序状态，不改动主程序逻辑。
+ *
+ * v64 修复（v63 引入的手误）：
+ *   1. 【致命】v63 把变量 localTs 改名为 localTsBefore 时，漏改了"已是最新"提示里的引用，
+ *      导致只要走到该分支就抛 "Can't find variable: localTs"，拉取直接报错失败。
+ *      本次统一修正，并补测试覆盖该分支（此前无测试覆盖 → 手误才漏了出去）。
+ *   2. 「已是最新」分支也调用一次界面刷新，避免"数据其实已在本地、界面却没显示"的错觉。
+ *   3. 「更新 M 条」改为只在内容真正变化时才计数（用键序无关的稳定序列化比较），
+ *      不再因为整包时间戳较新就把所有记录都算成"更新"。
  *
  * v63 修复（跨设备同步丢数据 · 本次根因）：
  *   1. 【致命】拉取合并用单一全局 lastSavedTs 做"整包谁新谁赢"比较。一旦手机/电脑时钟不一致
@@ -438,6 +446,12 @@
   function recId(x) {
     return (x && typeof x === 'object' && x.id !== undefined && x.id !== null) ? x.id : null;
   }
+  /* 键序无关的稳定序列化：用于判断"内容是否真的变了"（键顺序不同不算变化） */
+  function stable(v) {
+    if (v === null || typeof v !== 'object') return JSON.stringify(v);
+    if (Array.isArray(v)) return '[' + v.map(stable).join(',') + ']';
+    return '{' + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ':' + stable(v[k]); }).join(',') + '}';
+  }
   function isListField(v) {
     return Array.isArray(v) && v.length > 0 && v.every(function (it) {
       return it && typeof it === 'object' && recId(it) !== null;
@@ -458,7 +472,11 @@
           else {
             var lr = map[id];
             var rUpd = x.updatedAt || 0, lUpd = lr.updatedAt || 0;
-            if (remoteTs > localTs || rUpd > lUpd) { map[id] = x; updated++; }
+            if (remoteTs > localTs || rUpd > lUpd) {
+              /* 只有内容真的不同才算"更新"，避免整包时间戳较新时把所有记录都记成更新 */
+              if (stable(x) !== stable(lr)) updated++;
+              map[id] = x;
+            }
           }
         });
         cur[k] = Object.keys(map).map(function (kk) { return map[kk]; });
@@ -507,10 +525,12 @@
           if (changed.added === 0 && changed.updated === 0 && remoteTs <= localTsBefore) {
             if (manual) {
               toast('本地已是最新，无需拉取');
-              report('本地已是最新，无需拉取。\n   本地时间戳：' + new Date(localTs).toLocaleString() +
+              report('本地已是最新，无需拉取。\n   本地时间戳：' + new Date(localTsBefore).toLocaleString() +
                 '\n   云端时间戳：' + new Date(remoteTs).toLocaleString(), 'run');
             }
             clearErr();          /* 能读到并比对成功，说明通道正常 */
+            /* 即便无需合并也刷一次界面：避免"数据其实已在本地、界面却没显示"的错觉 */
+            try { if (typeof renderAll === 'function') renderAll(); } catch (e) {}
             refreshStatus();
             return false;
           }
