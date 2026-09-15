@@ -1,5 +1,5 @@
 /* ============================================================================
- * Isabel 工作台 · 云同步模块 (iw-sync.js)  v62
+ * Isabel 工作台 · 云同步模块 (iw-sync.js)  v63
  * 功能：把工作台数据用「密码 AES-256-GCM 加密」后备份到 GitHub 私有仓库，
  *      并在其他端（公司/家里/手机）打开时自动拉取合并，实现跨端保密同步。
  * 设计原则：
@@ -7,6 +7,13 @@
  *   - 数据在本地加密后才上传，GitHub 上只存密文，仓库管理员无密码也读不到。
  *   - 密码仅用于加解密，从不上传；Token 仅用于读写你自己的私有仓库。
  *   - 非侵入式：通过 window.IWApp 桥接访问主程序状态，不改动主程序逻辑。
+ *
+ * v63 修复（跨设备同步丢数据 · 本次根因）：
+ *   1. 【致命】拉取合并用单一全局 lastSavedTs 做"整包谁新谁赢"比较。一旦手机/电脑时钟不一致
+ *      （手机偏快极常见），手机会判定自己"已是最新"而静默跳过合并，桌面端新增的客户永远拉不到，
+ *      且界面不报错（看起来像成功）。改为「记录级并集合并」：列表按 id 并集，缺失记录一律补回，
+ *      谁新用谁的字段级更新；仅当确实无任何新增/更新时才提示"已是最新"。
+ *   2. 拉取成功提示改为显示「新增 N 条 / 更新 M 条」，让"是否真的拉到了"一目了然。
  *
  * v62 修复（界面可信度）：
  *   1. 【重要】"连接成功"与"网络连接失败"同屏出现 —— 失败信息被持久化后从不清除，
@@ -422,7 +429,49 @@
     pushTimer = setTimeout(function () { doPush(false); }, AUTO_PUSH_DEBOUNCE);
   }
 
-  /* ---------------- 拉取（合并，最后写入获胜） ---------------- */
+  /* ---------------- 记录级合并（修复跨设备时钟偏差导致新记录被丢弃） ----------------
+   * 旧逻辑：整包比较 lastSavedTs，谁大整包获胜 —— 一旦某端时钟偏快（手机/电脑时钟
+   * 不一致极常见），偏慢端的新增记录会被永久判定为"本地已是最新"而静默丢弃，界面还不报错。
+   * 本次"桌面新增客户手机收不到"正是此因。
+   * 新逻辑：列表类字段按 id 做并集合并（缺失的记录一律补回，谁新用谁的字段级更新）；
+   *         标量字段仍按整包时间戳取舍。无论两端时钟是否同步，新增记录都不会丢。 */
+  function recId(x) {
+    return (x && typeof x === 'object' && x.id !== undefined && x.id !== null) ? x.id : null;
+  }
+  function isListField(v) {
+    return Array.isArray(v) && v.length > 0 && v.every(function (it) {
+      return it && typeof it === 'object' && recId(it) !== null;
+    });
+  }
+  function mergeInto(cur, remote) {
+    var remoteTs = remote.lastSavedTs || 0, localTs = cur.lastSavedTs || 0;
+    var added = 0, updated = 0;
+    for (var k in remote) {
+      if (!Object.prototype.hasOwnProperty.call(remote, k)) continue;
+      var rv = remote[k];
+      if (isListField(rv) && isListField(cur[k])) {
+        var map = {};
+        (cur[k] || []).forEach(function (x) { map[recId(x)] = x; });
+        rv.forEach(function (x) {
+          var id = recId(x);
+          if (!(id in map)) { map[id] = x; added++; }
+          else {
+            var lr = map[id];
+            var rUpd = x.updatedAt || 0, lUpd = lr.updatedAt || 0;
+            if (remoteTs > localTs || rUpd > lUpd) { map[id] = x; updated++; }
+          }
+        });
+        cur[k] = Object.keys(map).map(function (kk) { return map[kk]; });
+      } else if (isListField(rv) && !isListField(cur[k])) {
+        cur[k] = rv.slice(); added += (rv.length || 0);
+      } else if (remoteTs > localTs) {
+        cur[k] = rv;
+      }
+    }
+    return { added: added, updated: updated };
+  }
+
+  /* ---------------- 拉取（合并，记录级并集） ---------------- */
   function doPull(manual) {
     if (!getData()) { if (manual) toast('数据尚未加载完成，请稍候'); return Promise.resolve(false); }
     if (busySync) { if (manual) toast('同步进行中，请稍候'); return Promise.resolve(false); }
@@ -443,36 +492,39 @@
         }
         var pkg = b64dec(String(existing.content).replace(/\s+/g, ''));
         return decryptJSON(pkg, c.pwd).then(function (remote) {
-          var local = getData();
+          var cur = getData();
+          if (!cur) {
+            if (manual) toast('数据尚未加载完成，请稍候');
+            clearErr(); refreshStatus(); return false;
+          }
+          /* 记录级合并：把云端「新记录」合并进本地，而非仅用整包时间戳一刀切。
+           * 修复跨设备时钟偏差导致手机端误判"本地已是最新"而丢弃桌面端新增客户的问题。
+           * 注意：mergeInto 会把标量字段(含 lastSavedTs)按"云端较新则覆盖"合并，
+           * 因此必须在合并前先快照本地时间戳，否则合完再读会变成云端值，误判"已是最新"。 */
+          var localTsBefore = cur.lastSavedTs || 0;
+          var changed = mergeInto(cur, remote);
           var remoteTs = remote.lastSavedTs || 0;
-          var localTs = local ? (local.lastSavedTs || 0) : 0;
-          if (remoteTs > localTs) {
-            var cur = getData();
-            if (cur) {
-              for (var k in remote) {
-                if (Object.prototype.hasOwnProperty.call(remote, k)) cur[k] = remote[k];
-              }
-            }
-            doSave();
-            localStorage.setItem(LS.lastPull, String(Date.now()));
-            clearErr();
+          if (changed.added === 0 && changed.updated === 0 && remoteTs <= localTsBefore) {
             if (manual) {
-              toast('✅ 已从云端拉取并合并最新数据');
-              report('✅ 已拉取云端最新数据\n   云端时间戳：' + new Date(remoteTs).toLocaleString() +
-                '\n   通道：' + lastVia, 'ok');
+              toast('本地已是最新，无需拉取');
+              report('本地已是最新，无需拉取。\n   本地时间戳：' + new Date(localTs).toLocaleString() +
+                '\n   云端时间戳：' + new Date(remoteTs).toLocaleString(), 'run');
             }
-            try { if (typeof renderAll === 'function') renderAll(); } catch (e) {}
+            clearErr();          /* 能读到并比对成功，说明通道正常 */
             refreshStatus();
-            return true;
+            return false;
           }
+          doSave();
+          localStorage.setItem(LS.lastPull, String(Date.now()));
+          clearErr();
           if (manual) {
-            toast('本地已是最新，无需拉取');
-            report('本地已是最新，无需拉取。\n   本地时间戳：' + new Date(localTs).toLocaleString() +
-              '\n   云端时间戳：' + new Date(remoteTs).toLocaleString(), 'run');
+            toast('✅ 已从云端拉取并合并（新增 ' + changed.added + ' 条 / 更新 ' + changed.updated + ' 条）');
+            report('✅ 已拉取云端最新数据\n   云端时间戳：' + new Date(remoteTs).toLocaleString() +
+              '\n   新增记录：' + changed.added + ' 条\n   更新记录：' + changed.updated + ' 条\n   通道：' + lastVia, 'ok');
           }
-          clearErr();          /* 能读到并比对成功，说明通道正常 */
+          try { if (typeof renderAll === 'function') renderAll(); } catch (e) {}
           refreshStatus();
-          return false;
+          return true;
         });
       });
     }).catch(function (e) {
