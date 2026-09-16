@@ -384,6 +384,7 @@
     }
     var data = getData();
     if (!data) { if (manual) toast('数据尚未加载完成，请稍候'); return Promise.resolve(false); }
+    if (Array.isArray(data.tasks)) data.tasks = dedupTasks(data.tasks);   // 推送前先收敛重复打卡项，确保云端始终干净
     var plain;
     try { plain = JSON.stringify(data); } catch (e) { plain = ''; }
     var fp = fingerprint(plain);
@@ -452,6 +453,36 @@
     if (Array.isArray(v)) return '[' + v.map(stable).join(',') + ']';
     return '{' + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ':' + stable(v[k]); }).join(',') + '}';
   }
+  /* 按 text 折叠重复的打卡项（历史脏数据：同一文本因 id 不同而重复成多条）。
+   * 规则：同一 text 只保留一条；勾选态取 OR（任一端勾过即视为已勾）；分段态逐段 OR；
+   *      优先保留固定字符串 id（dt-*），让身份跨设备稳定。自定义任务（无 text）原样保留。 */
+  function dedupTasks(list) {
+    if (!Array.isArray(list)) return list;
+    var groups = {};
+    list.forEach(function (t) {
+      if (!t || typeof t !== 'object') return;
+      var key = (t.text || '').trim();
+      if (!key) return;
+      (groups[key] = groups[key] || []).push(t);
+    });
+    var out = [];
+    Object.keys(groups).forEach(function (key) {
+      var g = groups[key];
+      var surv = g.filter(function (x) { return typeof x.id === 'string'; })[0] || g[0];
+      g.forEach(function (x) {
+        if (x === surv) return;
+        if (x.done) surv.done = true;
+        if (Array.isArray(x.segments) && Array.isArray(surv.segments)) {
+          x.segments.forEach(function (s, i) { if (s) surv.segments[i] = true; });
+        }
+      });
+      out.push(surv);
+    });
+    return out;
+  }
+  /* 这些标量属于「当前设备本地状态」，合并时不要用云端值覆盖，避免跨设备日期相互污染
+   * （例如云端带回旧日期会触发本机误判跨天、反复重置，曾是重复打卡的诱因之一）。 */
+  var SKIP_SCALAR = { date: 1, supplementDate: 1 };
   function isListField(v) {
     return Array.isArray(v) && v.length > 0 && v.every(function (it) {
       return it && typeof it === 'object' && recId(it) !== null;
@@ -480,9 +511,13 @@
           }
         });
         cur[k] = Object.keys(map).map(function (kk) { return map[kk]; });
+        if (k === 'tasks') cur[k] = dedupTasks(cur[k]);   // 折叠历史重复打卡项
       } else if (isListField(rv) && !isListField(cur[k])) {
-        cur[k] = rv.slice(); added += (rv.length || 0);
+        cur[k] = (k === 'tasks') ? dedupTasks(rv.slice()) : rv.slice();
+        added += (rv.length || 0);
       } else if (remoteTs > localTs) {
+        /* date / supplementDate 属于本地状态，不随云端覆盖，避免跨设备日期污染触发误重置 */
+        if (SKIP_SCALAR[k]) { if (!(k in cur)) cur[k] = rv; continue; }
         cur[k] = rv;
       }
     }
@@ -893,7 +928,7 @@
 
   /* 对外暴露，便于排查 */
   window.IWSync = {
-    version: 'v62',
+    version: 'v64',
     diag: runDiag, test: testConn,
     push: function () { return doPush(true); },
     pull: function () { return doPull(true); },

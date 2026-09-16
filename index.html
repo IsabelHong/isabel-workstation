@@ -2927,7 +2927,7 @@
 
 <script>
 // 当前版本号（每次发布递增）。用于侧栏显示 + Service Worker 更新提示。
-const APP_VERSION = 'v64';
+const APP_VERSION = 'v65';
 
 // 全局错误捕获：任何 JS 报错都显示到屏幕顶部红条，避免「点了没反应」却不知原因
 window.addEventListener('error', function (e) {
@@ -3293,17 +3293,7 @@ function migrateData(parsed) {
       clients: JSON.parse(JSON.stringify((parsed.clients || []).filter(c => c.dateStr === parsed.date))),
     };
     const oldCustomTasks = (parsed.tasks || []).filter(t => !defaultTasks.includes(t.text));
-    parsed.tasks = [
-      { id: Date.now(), text: '每天看书15分钟', tag: 'habit', done: false },
-      { id: Date.now()+1, text: '运动15分钟', tag: 'habit', done: false, segments: [false, false, false] },
-      { id: Date.now()+3, text: '学习一个视频文件', tag: 'study', done: false },
-      { id: Date.now()+8, text: '20 mins for English', tag: 'study', done: false },
-      { id: Date.now()+4, text: '上班打卡', tag: 'reminder', done: false },
-      { id: Date.now()+5, text: '下班打卡', tag: 'reminder', done: false },
-      { id: Date.now()+6, text: '录入客户台账', tag: 'reminder', done: false },
-      { id: Date.now()+7, text: '更新中建壹品运营官系统', tag: 'reminder', done: false },
-      ...oldCustomTasks.map(t => ({ ...t, done: false }))
-    ];
+    parsed.tasks = makeDefaultTasks().concat(oldCustomTasks.map(t => ({ ...t, done: false })));
     parsed.date = today;
   }
 
@@ -3318,9 +3308,8 @@ function migrateData(parsed) {
     { text: '更新中建壹品运营官系统', tag: 'reminder' },
   ].filter(rt => !existingTaskTexts.includes(rt.text));
   if (reminderTasksToAdd.length > 0) {
-    let baseId = Date.now();
     reminderTasksToAdd.forEach(rt => {
-      parsed.tasks.push({ id: baseId++, text: rt.text, tag: rt.tag, done: false });
+      parsed.tasks.push({ id: defaultTaskId(rt.text), text: rt.text, tag: rt.tag, done: false });
     });
   }
   if (!parsed.supplements) parsed.supplements = [];
@@ -3511,6 +3500,54 @@ const defaultTasks = [
   '更新中建壹品运营官系统'
 ];
 
+/* 默认打卡任务的「稳定身份标识」：固定字符串 id。
+ * 旧代码用 Date.now() 现场铸造 id，叠加同步合并「按 id 并集合并」会导致同一任务被反复补回（重复打卡）。
+ * 改用固定 id 后，任何设备 / 任何天，同一个默认任务都是同一条记录，合并不会再产生重复。 */
+const DEFAULT_TASK_DEFS = [
+  { id: 'dt-reading',        text: '每天看书15分钟',         tag: 'habit',    done: false },
+  { id: 'dt-exercise',       text: '运动15分钟',             tag: 'habit',    done: false, segments: [false, false, false] },
+  { id: 'dt-study-video',    text: '学习一个视频文件',       tag: 'study',    done: false },
+  { id: 'dt-english',        text: '20 mins for English',    tag: 'study',    done: false },
+  { id: 'dt-work-start',     text: '上班打卡',               tag: 'reminder', done: false },
+  { id: 'dt-work-end',       text: '下班打卡',               tag: 'reminder', done: false },
+  { id: 'dt-client-ledger',  text: '录入客户台账',           tag: 'reminder', done: false },
+  { id: 'dt-yizhong',        text: '更新中建壹品运营官系统', tag: 'reminder', done: false }
+];
+function makeDefaultTasks() {
+  return DEFAULT_TASK_DEFS.map(function (d) { return Object.assign({}, d, { done: false }); });
+}
+/* 给定默认任务文本，返回其固定 id（供缺失补全时使用，避免再铸 Date.now() id） */
+function defaultTaskId(text) {
+  var d = DEFAULT_TASK_DEFS.filter(function (x) { return x.text === text; })[0];
+  return d ? d.id : ('task-' + Date.now());
+}
+
+/* 按文本折叠重复打卡项：同一文本只保留一条，并合并勾选状态（任一处 done 为真即保留 done=true）。
+ * 用于：① 启动加载时收敛历史脏数据（32→8）；② 配合 iw-sync.js 的 merge/push 去重，确保全设备最终都收敛到 8 条默认任务。
+ * 幂等：对已是干净的 8 条无副作用。 */
+function normalizeTasks(tasks) {
+  if (!Array.isArray(tasks)) return tasks || [];
+  var seen = {}, out = [];
+  for (var i = 0; i < tasks.length; i++) {
+    var t = tasks[i];
+    if (!t || typeof t !== 'object') continue;
+    var key = (t.text || '').trim();
+    if (!key) { out.push(t); continue; }
+    if (seen[key]) {
+      var ex = seen[key];
+      if (t.done && !ex.done) ex.done = true;
+      if (Array.isArray(t.segments) && Array.isArray(ex.segments)) {
+        for (var s2 = 0; s2 < t.segments.length; s2++) if (t.segments[s2] && !ex.segments[s2]) ex.segments[s2] = true;
+      }
+      if (t.pushedToDone && !ex.pushedToDone) ex.pushedToDone = true;
+    } else {
+      seen[key] = t;
+      out.push(t);
+    }
+  }
+  return out;
+}
+
 // 预生成的小红书发布想法
 const defaultXhsPosts = [
   {
@@ -3580,16 +3617,7 @@ const defaultXhsPosts = [
 
 let defaultData = {
   date: today,
-  tasks: [
-    { id: 1, text: '每天看书15分钟', tag: 'habit', done: false },
-    { id: 2, text: '运动15分钟', tag: 'habit', done: false, segments: [false, false, false] },
-    { id: 4, text: '学习一个视频文件', tag: 'study', done: false },
-    { id: 9, text: '20 mins for English', tag: 'study', done: false },
-    { id: 5, text: '上班打卡', tag: 'reminder', done: false },
-    { id: 6, text: '下班打卡', tag: 'reminder', done: false },
-    { id: 7, text: '录入客户台账', tag: 'reminder', done: false },
-    { id: 8, text: '更新中建壹品运营官系统', tag: 'reminder', done: false },
-  ],
+  tasks: makeDefaultTasks(),
   clients: [],
   workTodos: [],
   memos: [],
@@ -3679,17 +3707,7 @@ function loadData(raw) {
           clients: JSON.parse(JSON.stringify((parsed.clients || []).filter(c => c.dateStr === parsed.date))),
         };
         const oldCustomTasks = (parsed.tasks || []).filter(t => !defaultTasks.includes(t.text));
-        parsed.tasks = [
-          { id: Date.now(), text: '每天看书15分钟', tag: 'habit', done: false },
-          { id: Date.now()+1, text: '运动15分钟', tag: 'habit', done: false, segments: [false, false, false] },
-          { id: Date.now()+3, text: '学习一个视频文件', tag: 'study', done: false },
-          { id: Date.now()+8, text: '20 mins for English', tag: 'study', done: false },
-          { id: Date.now()+4, text: '上班打卡', tag: 'reminder', done: false },
-          { id: Date.now()+5, text: '下班打卡', tag: 'reminder', done: false },
-          { id: Date.now()+6, text: '录入客户台账', tag: 'reminder', done: false },
-          { id: Date.now()+7, text: '更新中建壹品运营官系统', tag: 'reminder', done: false },
-          ...oldCustomTasks.map(t => ({ ...t, done: false }))
-        ];
+        parsed.tasks = makeDefaultTasks().concat(oldCustomTasks.map(t => ({ ...t, done: false })));
         parsed.date = today;
         // 不再清空客户列表，保留所有历史客户记录
       }
@@ -3713,9 +3731,8 @@ function loadData(raw) {
         { text: '更新中建壹品运营官系统', tag: 'reminder' },
       ].filter(rt => !existingTaskTexts.includes(rt.text));
       if (reminderTasksToAdd.length > 0) {
-        let baseId = Date.now();
         reminderTasksToAdd.forEach(rt => {
-          parsed.tasks.push({ id: baseId++, text: rt.text, tag: rt.tag, done: false });
+          parsed.tasks.push({ id: defaultTaskId(rt.text), text: rt.text, tag: rt.tag, done: false });
         });
       }
       if (!parsed.supplements) parsed.supplements = [];
@@ -3748,7 +3765,7 @@ function loadData(raw) {
       }
       // 确保「20 mins for English」打卡项存在（用户要求加回；与已删除的「英语练习20分钟」无关）
       if (parsed.tasks && !parsed.tasks.some(t => t.text === '20 mins for English')) {
-        parsed.tasks.push({ id: Date.now(), text: '20 mins for English', tag: 'study', done: false });
+        parsed.tasks.push({ id: 'dt-english', text: '20 mins for English', tag: 'study', done: false });
       }
       // 跨天重置保健品打卡状态
       if (parsed.supplementDate !== today) {
@@ -3808,17 +3825,7 @@ function loadData(raw) {
       oldParsed.date = today;
       // 重置任务
       const oldCustomTasks = (oldParsed.tasks || []).filter(t => !defaultTasks.includes(t.text));
-      oldParsed.tasks = [
-        { id: Date.now(), text: '每天看书15分钟', tag: 'habit', done: false },
-        { id: Date.now()+1, text: '运动15分钟', tag: 'habit', done: false, segments: [false, false, false] },
-        { id: Date.now()+3, text: '学习一个视频文件', tag: 'study', done: false },
-        { id: Date.now()+8, text: '20 mins for English', tag: 'study', done: false },
-        { id: Date.now()+4, text: '上班打卡', tag: 'reminder', done: false },
-        { id: Date.now()+5, text: '下班打卡', tag: 'reminder', done: false },
-        { id: Date.now()+6, text: '录入客户台账', tag: 'reminder', done: false },
-        { id: Date.now()+7, text: '更新中建壹品运营官系统', tag: 'reminder', done: false },
-        ...oldCustomTasks.map(t => ({ ...t, done: false }))
-      ];
+      oldParsed.tasks = makeDefaultTasks().concat(oldCustomTasks.map(t => ({ ...t, done: false })));
       oldParsed.clients = oldParsed.clients || [];
       normalizeClientRecords(oldParsed);
       oldParsed.books = oldParsed.books || [];
@@ -4295,17 +4302,7 @@ function rolloverTasks() {
     clients: JSON.parse(JSON.stringify((data.clients || []).filter(c => c.dateStr === prev)))
   };
   const oldCustom = (data.tasks || []).filter(x => !defaultTasks.includes(x.text));
-  data.tasks = [
-    { id: Date.now(), text: '每天看书15分钟', tag: 'habit', done: false },
-    { id: Date.now()+1, text: '运动15分钟', tag: 'habit', done: false, segments: [false, false, false] },
-    { id: Date.now()+3, text: '学习一个视频文件', tag: 'study', done: false },
-    { id: Date.now()+8, text: '20 mins for English', tag: 'study', done: false },
-    { id: Date.now()+4, text: '上班打卡', tag: 'reminder', done: false },
-    { id: Date.now()+5, text: '下班打卡', tag: 'reminder', done: false },
-    { id: Date.now()+6, text: '录入客户台账', tag: 'reminder', done: false },
-    { id: Date.now()+7, text: '更新中建壹品运营官系统', tag: 'reminder', done: false },
-    ...oldCustom.map(x => ({ ...x, done: false, pushedToDone: false }))
-  ];
+  data.tasks = makeDefaultTasks().concat(oldCustom.map(x => ({ ...x, done: false, pushedToDone: false })));
   data.date = t;
   saveData();
   renderAll();
@@ -8027,10 +8024,11 @@ async function bootApp() {
   // 3) 末道清理 & 必含项注入（data 已就绪）
   const _rmEngFinal = ['英语练习20分钟', '练习英语20分钟'];
   const _before = (data.tasks || []).length;
+  data.tasks = normalizeTasks(data.tasks || []);
   data.tasks = (data.tasks || []).filter(t => !_rmEngFinal.includes(t.text));
   if ((data.tasks || []).length < _before) { saveData(); console.log('[Clean] 已移除英语打卡项:', _before - (data.tasks || []).length, '条'); }
   if (!(data.tasks || []).some(t => t.text === '20 mins for English')) {
-    data.tasks.push({ id: Date.now(), text: '20 mins for English', tag: 'study', done: false });
+    data.tasks.push({ id: 'dt-english', text: '20 mins for English', tag: 'study', done: false });
     console.log('[Inject] 已补回「20 mins for English」');
   }
   saveData(); // 首次落盘（IndexedDB 为主，localStorage 兜底镜像）
@@ -8266,7 +8264,7 @@ if ('serviceWorker' in navigator) {
     // 注意：必须用「带版本号的文件名」注册。平台 CDN 会缓存旧的 sw.js，
     // 若沿用同一文件名，用户端永远拉不到新的 Service Worker（离线能力无法更新）。
     // 每次升级 APP_VERSION 时，请同步创建/更新 sw-v59.js 并改这里。
-    navigator.serviceWorker.register('./sw-v64.js').then(reg => {
+    navigator.serviceWorker.register('./sw-v65.js').then(reg => {
       // 已有旧 SW 在控制页面，而新 SW 已就绪 → 提示更新
       if (reg.waiting && navigator.serviceWorker.controller) {
         showUpdateBanner();
@@ -8336,6 +8334,6 @@ window.IWApp = {
   <div class="lb-hint" data-page-node-id="k7S4jERrDovnAyUE08pV0r">双指捏合缩放 · 拖动平移 · 双击放大/还原 · 点空白处关闭</div>
 </div>
 
-<script src="iw-sync.js?v=64"></script>
+<script src="iw-sync.js?v=65"></script>
 </body>
 </html>
