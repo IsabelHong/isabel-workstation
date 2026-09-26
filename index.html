@@ -8688,7 +8688,7 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     // 注意：必须用「带版本号的文件名」注册。平台 CDN 会缓存旧的 sw.js，
     // 若沿用同一文件名，用户端永远拉不到新的 Service Worker（离线能力无法更新）。
-    // 每次升级 APP_VERSION 时，请同步创建/更新 sw-v59.js 并改这里。
+    // 每次升级 APP_VERSION 时，请同步创建/更新对应的 sw-vNN.js（当前 sw-v80.js）并改这里。
     navigator.serviceWorker.register('./sw-v80.js').then(reg => {
       // 已有旧 SW 在控制页面，而新 SW 已就绪 → 提示更新
       if (reg.waiting && navigator.serviceWorker.controller) {
