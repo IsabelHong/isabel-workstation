@@ -2232,6 +2232,107 @@
   .dash-card.accent { background: linear-gradient(135deg,#4a3e2a,#3a3020) !important; }
   .dash-card.accent .dash-num { color: var(--primary) !important; }
   }
+
+  /* @v80-mobile-start （此标记供改前/改后对比脚本精确剥离，勿删） */
+  /* ===================================================================
+     手机端「客户接待拆解」布局优化（v80）
+     问题（真实复现，390px）：.cm-combo 固定两栏 → 日历卡片内容 ~293px 被塞进 ~145px
+     容器、7 列被压到 ~20px/格（日期数字截断、第 6/7 列被挤出屏幕），右侧九宫格
+     被压成单列窄条且底部卡片看不到，出现横向溢出与内容截断。
+     方案：
+       ① ≤700px（覆盖全部常见手机/大屏手机）：两栏 → 单列上下堆叠，日历与九宫格
+          各占满整行宽度；竖虚线分隔改横向虚线；卡片内边距略收。
+       ② ≤768px：日历日格/字号加大便于点按与阅读；药丸瘦身；「今天」角标改为
+          数字下方不重叠；九宫格字号提升；底部固定「主题切换条」预留安全间距。
+       ③ ≤380px（如 iPhone SE）：进一步收紧留白，保证极窄屏同样完整。
+     关键加固：grid 的 1fr 轨道默认 min-width:auto 会取子项 min-content，药丸文字
+     （含 .cp-tag）会把日格 min-content 撑到 ~43px → 7 列共需 ~320px → 窄屏溢出。
+     故对日格加 min-width:0 + overflow:hidden，使轨道自动最小尺寸归零，
+     任何宽度下 7 列都恰好铺满、绝不产生横向滚动。
+     说明：`.cm-dk` 沿用 flex:1 1 30% + min-width，满宽后自然 3 列、更窄屏回 2 列，
+     无需为九宫格单独指定列数；→ 平板及以上（>700px）保持原始两栏并排设计不变。
+     =================================================================== */
+  @media (max-width: 768px) {
+    /* 接待日历：加大日格与字号，便于点按与阅读；触屏禁用悬停放大 */
+    .cm-cal-head { gap: 6px; margin-bottom: 8px; }
+    .cm-cal-title { font-size: 14px; }
+    .cm-cal-legend { font-size: 11px; }
+    .cm-cal-nav button { width: 24px; height: 24px; font-size: 14px; }
+    .cm-cal-nav span { font-size: 12px; min-width: 84px; }
+    .cm-cal-wk { gap: 3px; }
+    .cm-cal-wk div { font-size: 11px; }
+    .cm-cal-grid { gap: 3px; }
+    /* 关键：grid 的 1fr 轨道默认 min-width:auto，会取子项 min-content。
+       药丸文字（含 .cp-tag）会把日格 min-content 撑到 ~43px → 7 列共需 ~320px
+       → 窄屏把网格挤出屏幕（第 6/7 列被裁）。加 min-width:0 + overflow:hidden
+       使轨道自动最小尺寸归零，任何宽度下 7 列都恰好铺满、绝不横向溢出。 */
+    .cm-cal-day { min-width: 0; overflow: hidden; min-height: 54px; padding: 5px 4px 6px; border-radius: 10px; }
+    .cm-cal-day:hover { transform: none; }
+    .cm-cal-day .num { font-size: 12.5px; }
+    /* 「今天」角标：窄屏若仍绝对定位在右上会压住日期数字 → 改为排在数字下方，不重叠 */
+    .cm-cal-day .tdy { position: static; align-self: flex-start; margin-top: 1px; font-size: 7px; padding: 0 3px; }
+    .cm-cal-pills { min-width: 0; overflow: hidden; }
+    /* 药丸瘦身：隐藏圆点（省 ~6.5px）+ 标签略缩小，让「新/复 + 数字」在窄屏也完整不裁切。
+       文字标签必须保留——深色主题下两种药丸同为米色底，仅靠颜色无法区分新访/复访。 */
+    .cm-cal-pill { font-size: 10px; padding: 1px 4px; gap: 1px; max-width: 100%; overflow: hidden; }
+    .cm-cal-pill::before { display: none; }
+    .cm-cal-pill .cp-tag { font-weight: 600; opacity: .85; }
+    .cm-cal-foot { gap: 6px; }
+    .cm-cal-tot { padding: 4px 9px; }
+    .cm-cal-tot .k { font-size: 10px; }
+    .cm-cal-tot .v { font-size: 15px; }
+    .cm-cal-tot .u { font-size: 9px; }
+    .cm-cal-foot .hint { font-size: 10.5px; }
+    /* 九宫格：满宽后自然 3/2 列，提升数字与标签可读性 */
+    .cm-detail-kpis { gap: 8px; }
+    .cm-dk { padding: 12px 8px; min-width: 76px; }
+    .cm-dk:hover { transform: none; }
+    .cm-dk .n { font-size: 20px; }
+    .cm-dk .l { font-size: 11.5px; }
+    .cm-dk-hint { font-size: 10.5px; }
+    /* 底部固定主题切换条遮挡末屏内容 → 预留底部安全间距 */
+    .main-content { padding-bottom: 74px; }
+  }
+
+  /* 手机端（≤700px，覆盖 320/360/375/390/414/430 等全部常见手机与 480~540 大屏手机/
+     横屏）：两栏 → 单列上下堆叠。这是消除横向挤压与内容截断的关键一步。 */
+  @media (max-width: 700px) {
+    .cm-combo { grid-template-columns: 1fr; }
+    /* 竖虚线分隔 → 横虚线分隔（堆叠后左右关系变为上下关系） */
+    .cm-col-l { padding-right: 0; border-right: 0; padding-bottom: 12px; border-bottom: 2px dashed var(--border); }
+    .cm-col-r { padding-left: 0; padding-top: 12px; }
+    /* 卡片内边距略收，把可用宽度让给内容 */
+    .cm-cal-card, .cm-dash-card { padding: 12px 11px; }
+  }
+
+  /* 超窄屏（≤380px，如 iPhone SE / 小屏安卓）：进一步收紧留白与字号，
+     并把九宫格最小列宽降到 70px，确保日历 7 列与 9 张卡片都完整、无需横向滚动。 */
+  @media (max-width: 380px) {
+    .main-content { padding-left: 8px; padding-right: 8px; }
+    .cm-panel { padding: 10px; }
+    .cm-cal-card, .cm-dash-card { padding: 10px 8px; }
+    .cm-cal-title { font-size: 13px; }
+    .cm-cal-legend { font-size: 10px; }
+    .cm-cal-nav button { width: 21px; height: 21px; font-size: 12px; }
+    .cm-cal-nav span { font-size: 11px; min-width: 72px; }
+    .cm-cal-wk { gap: 2px; }
+    .cm-cal-wk div { font-size: 10px; }
+    .cm-cal-grid { gap: 2px; }
+    .cm-cal-day { min-height: 48px; padding: 4px 3px 5px; border-radius: 9px; }
+    .cm-cal-day .num { font-size: 11.5px; }
+    .cm-cal-pill { font-size: 9px; padding: 1px 3px; }
+    .cm-cal-pill .cp-tag { font-weight: 600; }
+    .cm-cal-day .tdy { font-size: 6.5px; padding: 0 2px; }
+    .cm-cal-tot { padding: 3px 7px; }
+    .cm-cal-tot .k { font-size: 9.5px; }
+    .cm-cal-tot .v { font-size: 14px; }
+    .cm-cal-foot .hint { font-size: 10px; }
+    .cm-detail-kpis { gap: 6px; }
+    .cm-dk { min-width: 70px; padding: 11px 6px; }
+    .cm-dk .n { font-size: 19px; }
+    .cm-dk .l { font-size: 11px; }
+  }
+  /* @v80-mobile-end */
 </style>
 </head>
 <body data-page-node-id="fyYhVfzERCm4xrFNBsQsND">
@@ -3216,7 +3317,7 @@
 
 <script>
 // 当前版本号（每次发布递增）。用于侧栏显示 + Service Worker 更新提示。
-const APP_VERSION = 'v79';
+const APP_VERSION = 'v80';
 
 // 全局错误捕获：任何 JS 报错都显示到屏幕顶部红条，避免「点了没反应」却不知原因
 window.addEventListener('error', function (e) {
@@ -5239,8 +5340,10 @@ function renderReceptionCalendar(container, ym, list) {
     const cls = 'cm-cal-day' + ((dm.n + dm.r) ? ' has' : ' no') + (d === tDay ? ' today' : '');
     const click = ' onclick="openReceptionDay(\'' + ym + '\',' + d + ')"';
     let pills = '';
-    if (dm.n) pills += '<span class="cm-cal-pill n">新 ' + dm.n + '</span>';
-    if (dm.r) pills += '<span class="cm-cal-pill r">复 ' + dm.r + '</span>';
+    // 「新 / 复」文字包一层 .cp-tag：桌面端原样显示，手机端隐藏该标签只留「圆点 + 数字」，
+    // 避免药丸 min-content 撑宽日格、把 7 列网格挤出屏幕（详见 CSS 移动端块）
+    if (dm.n) pills += '<span class="cm-cal-pill n"><span class="cp-tag">新 </span>' + dm.n + '</span>';
+    if (dm.r) pills += '<span class="cm-cal-pill r"><span class="cp-tag">复 </span>' + dm.r + '</span>';
     let inner = '<div class="num">' + d + '</div>' + (pills ? '<div class="cm-cal-pills">' + pills + '</div>' : '');
     if (d === tDay) inner += '<span class="tdy">今天</span>';
     return '<div class="' + cls + '"' + click + '>' + inner + '</div>';
@@ -8586,7 +8689,7 @@ if ('serviceWorker' in navigator) {
     // 注意：必须用「带版本号的文件名」注册。平台 CDN 会缓存旧的 sw.js，
     // 若沿用同一文件名，用户端永远拉不到新的 Service Worker（离线能力无法更新）。
     // 每次升级 APP_VERSION 时，请同步创建/更新 sw-v59.js 并改这里。
-    navigator.serviceWorker.register('./sw-v79.js').then(reg => {
+    navigator.serviceWorker.register('./sw-v80.js').then(reg => {
       // 已有旧 SW 在控制页面，而新 SW 已就绪 → 提示更新
       if (reg.waiting && navigator.serviceWorker.controller) {
         showUpdateBanner();
@@ -8656,7 +8759,7 @@ window.IWApp = {
   <div class="lb-hint" data-page-node-id="k7S4jERrDovnAyUE08pV0r">双指捏合缩放 · 拖动平移 · 双击放大/还原 · 点空白处关闭</div>
 </div>
 
-<script src="iw-sync.js?v=79"></script>
+<script src="iw-sync.js?v=80"></script>
 <style>
 /* 主题切换控件：默认停靠右下角（避开顶部工具条），手机端上移到移动底部导航之上 */
 #dt-switch{position:fixed;right:14px;bottom:16px;z-index:2147483647;display:flex;gap:4px;padding:5px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.28)}
