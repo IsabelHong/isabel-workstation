@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache" data-page-node-id="xsnSdTjVUzwTGoAhgDWwct">
 <meta http-equiv="Expires" content="0" data-page-node-id="lAX0R5wA1QompUHzc2VwD2">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" data-page-node-id="fVl5s60If8sOgH6mapV9TH">
-<meta name="theme-color" content="#8e5fc0" data-page-node-id="6Cp6jNcFpQCrgO8ERkwIdB">
+<meta name="theme-color" content="#283040" data-page-node-id="6Cp6jNcFpQCrgO8ERkwIdB">
 <meta name="apple-mobile-web-app-capable" content="yes" data-page-node-id="AoYMmWcm7VOMYmbo9oWeMT">
 <meta name="apple-mobile-web-app-status-bar-style" content="default" data-page-node-id="1dBeGoHxLEPMJhEmYpixuH">
 <meta name="apple-mobile-web-app-title" content="Isabel" data-page-node-id="qF1bH7ir6eNCNsCyE2ZzFC">
@@ -15,6 +15,17 @@
 <link rel="icon" href="./favicon-purple.ico" data-page-node-id="Z7GdBWOkEGZNVeppNrFLbD">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192-purple.png" data-page-node-id="VPdFUR2pGRBgNLCaQPnV0i">
 <title>Isabel's Work Station</title>
+<meta name="color-scheme" content="light dark">
+<script>
+(function(){
+  try {
+    var hash = location.hash.replace('#','');
+    var saved = (hash==='dark'||hash==='light'||hash==='system') ? hash : (localStorage.getItem('iw_theme')||'dark');
+    var dark = saved==='dark' || (saved==='system' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', dark?'dark':'light');
+  } catch(e){ document.documentElement.setAttribute('data-theme','dark'); }
+})();
+</script>
 <style>
   :root {
     --bg: #faf5f7;
@@ -28,7 +39,13 @@
     --text-main: #2d2a26;
     --text-secondary: #8a8278;
     --text-light: #b5ada3;
+    --text: #2d2a26;
     --border: #f0e4e8;
+    --bg-soft: #f7eef1;
+    --input-bg: #faf5f7;
+    --surface-2: #f7eef1;
+    --surface-3: #f5edf2;
+    --hover-bg: rgba(212,131,154,0.10);
     --success: #5b8ea0;
     --success-light: #e0eaf0;
     --warning: #d49744;
@@ -36,7 +53,7 @@
     --info: #4a8db5;
     --info-light: #e2f0f7;
     --shadow: 0 2px 12px rgba(45,42,38,0.06);
-    --shadow-hover: 0 4px 20px rgba(45,42,38,0.1);
+    --shadow-hover: 0 4px 20px rgba(45,42,38,0.10);
     --radius: 16px;
     --radius-sm: 10px;
   }
@@ -767,7 +784,7 @@
 
   /* ===== 客户月度索引（v55） ===== */
   .cm-toggle-on { background: #7c4dff !important; color: #fff !important; border-color: #7c4dff !important; }
-  .cm-panel { padding: 2px 0; }
+  .cm-panel { background: #f5f2fc; border-radius: 16px; padding: 16px; }
   .cm-crumb {
     display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
     font-size: 13px; color: #7c4dff; font-weight: 600; margin-bottom: 14px;
@@ -825,6 +842,95 @@
     background: #fff; font-size: 13px; color: var(--text); cursor: pointer;
   }
   .cm-empty { text-align: center; color: var(--text-secondary); padding: 26px 0; font-size: 13px; }
+
+  /* ===================================================================
+     月度拆解：左右等宽两栏（左=接待日历，右=九宫格）+ 右侧浮动（v67 新增）
+     配色用硬编码值，避免依赖不存在的 CSS 变量。
+     =================================================================== */
+  .cm-combo { display: grid; grid-template-columns: 1fr 1fr; gap: 0; align-items: stretch; margin: 6px 0 4px; }
+  .cm-col { display: flex; min-width: 0; }
+  .cm-col-l { padding-right: 16px; border-right: 2px dashed var(--border); }
+  .cm-col-r { padding-left: 16px; }
+  .cm-col-l > .cm-cal-card, .cm-col-r > .cm-dash-card { flex: 1 1 auto; width: 100%; height: 100%; }
+
+  /* 左：接待日历（方案A 双色药丸 · 迷你可爱） */
+  .cm-cal-card { background: #fff; border: 2px solid var(--border); border-radius: 18px; box-shadow: 0 6px 20px rgba(124,77,255,.08); padding: 12px 13px; display: flex; flex-direction: column; }
+  .cm-cal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 9px; min-height: 24px; }
+  .cm-cal-title { font-size: 13px; font-weight: 800; color: #b86a80; display: flex; align-items: center; gap: 5px; }
+  .cm-cal-legend { display: flex; gap: 8px; font-size: 10px; color: var(--text-secondary); font-weight: 700; }
+  .cm-cal-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 3px; vertical-align: -1px; }
+  .cm-cal-legend .lg-n i { background: #f48fb1; } .cm-cal-legend .lg-r i { background: #ffc46b; }
+  .cm-cal-nav { display: flex; align-items: center; gap: 1px; background: #ffe6ef; border-radius: 999px; padding: 2px; }
+  .cm-cal-nav button { border: 0; background: #fff; color: #b86a80; font-size: 12px; font-weight: 800; width: 19px; height: 19px; border-radius: 999px; cursor: pointer; line-height: 1; box-shadow: 0 1px 3px rgba(184,106,128,.22); }
+  .cm-cal-nav span { font-size: 10.5px; font-weight: 800; color: var(--text-main); padding: 0 5px; min-width: 66px; text-align: center; }
+  .cm-cal-wk { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 4px; }
+  .cm-cal-wk div { text-align: center; font-size: 9.5px; font-weight: 800; color: var(--text-light); padding: 2px 0; }
+  .cm-cal-wk .we { color: #d4839a; }
+  .cm-cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+  .cm-cal-day { position: relative; min-height: 46px; border: 1.5px solid var(--border); border-radius: 11px; background: #fff; padding: 4px 4px 5px; display: flex; flex-direction: column; gap: 3px; transition: .16s; }
+  .cm-cal-day:hover { transform: scale(1.07); box-shadow: 0 5px 14px rgba(244,143,177,.26); border-color: #f48fb1; z-index: 2; }
+  .cm-cal-day .num { font-size: 10.5px; font-weight: 800; color: var(--text-main); line-height: 1; }
+  .cm-cal-day.empty { background: transparent; border-color: transparent; pointer-events: none; }
+  .cm-cal-day.no { background: #fffafc; }
+  .cm-cal-day.no .num { color: var(--text-light); font-weight: 600; }
+  .cm-cal-day.has { background: linear-gradient(160deg,#fff,#fff6fa); }
+  .cm-cal-day.today { border-color: #f48fb1; background: #fff0f6; box-shadow: 0 0 0 3px #ffe6ef; }
+  .cm-cal-day.today .num { color: #b86a80; }
+  .cm-cal-day .tdy { position: absolute; top: 3px; right: 4px; font-size: 7.5px; font-weight: 800; color: #fff; background: linear-gradient(135deg,#f48fb1,#e06a93); border-radius: 999px; padding: 1px 4px; box-shadow: 0 1px 3px rgba(224,106,147,.4); }
+  .cm-cal-pills { display: flex; flex-wrap: wrap; gap: 2.5px; margin-top: 1px; }
+  .cm-cal-pill { font-size: 9px; font-weight: 800; border-radius: 999px; padding: 1px 5px; line-height: 1.3; white-space: nowrap; display: inline-flex; align-items: center; gap: 2px; }
+  .cm-cal-pill::before { content: ""; width: 4.5px; height: 4.5px; border-radius: 50%; display: inline-block; }
+  .cm-cal-pill.n { background: #ffe6ef; color: #e06a93; box-shadow: 0 1px 3px rgba(244,143,177,.3); }
+  .cm-cal-pill.n::before { background: #f48fb1; }
+  .cm-cal-pill.r { background: #fff1da; color: #e89a35; box-shadow: 0 1px 3px rgba(255,196,107,.3); }
+  .cm-cal-pill.r::before { background: #ffc46b; }
+  .cm-cal-day:not(.empty) { cursor: pointer; }
+  .cm-cal-day:not(.empty):active { transform: scale(.97); }
+  /* 接待日历：点击某天弹窗中的客户列表卡片 */
+  .cal-client-item { padding: 12px 14px; background: #fff; border: 1.5px solid var(--border); border-radius: 12px; margin-bottom: 10px; cursor: pointer; transition: .16s; }
+  .cal-client-item:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(244,143,177,.22); border-color: #f48fb1; }
+  .cal-client-item .cci-head { display: flex; align-items: center; gap: 8px; }
+  .cal-client-item .cci-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,#f48fb1,#e06a93); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 13px; flex: 0 0 auto; }
+  .cal-client-item .cci-name { font-weight: 800; font-size: 15px; color: var(--text-main); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cal-client-item .cci-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; font-size: 12px; color: var(--text-light); }
+  .cal-client-item .cci-reception { margin-top: 7px; font-size: 13px; color: var(--text-main); background: #fff6fa; border-radius: 8px; padding: 6px 8px; line-height: 1.5; }
+  .cal-client-item .rv-badge, .cal-client-item .fv-badge { font-size: 10.5px; font-weight: 800; border-radius: 999px; padding: 1px 7px; }
+  .cal-client-item .rv-badge { background: #fff1da; color: #e89a35; }
+  .cal-client-item .fv-badge { background: #ffe6ef; color: #e06a93; }
+  /* 接待时间（v70）：由客户 id 时间戳推出，放在姓名与意向徽章之间 */
+  .cal-client-item .cci-time { font-size: 11.5px; font-weight: 700; color: #e06a93; background: #fff0f6; border-radius: 999px; padding: 2px 8px; flex: 0 0 auto; white-space: nowrap; }
+  .cci-tip { text-align: right; font-size: 11.5px; color: var(--text-light); margin: 2px 2px 0; }
+  .cm-cal-foot { margin-top: 9px; padding-top: 8px; border-top: 2px dotted var(--border); display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .cm-cal-totals { display: flex; gap: 7px; flex-wrap: wrap; }
+  .cm-cal-tot { display: flex; align-items: baseline; gap: 3px; background: #fff; border: 1.5px solid var(--border); border-radius: 10px; padding: 3px 7px; }
+  .cm-cal-tot .k { font-size: 9px; color: var(--text-secondary); font-weight: 700; }
+  .cm-cal-tot .v { font-size: 13.5px; font-weight: 800; }
+  .cm-cal-tot.n .v { color: #b86a80; } .cm-cal-tot.r .v { color: #e89a35; } .cm-cal-tot.a .v { color: var(--text-main); }
+  .cm-cal-tot .u { font-size: 8.5px; color: var(--text-light); }
+  .cm-cal-foot .hint { font-size: 9.5px; color: var(--text-light); font-weight: 600; }
+
+  /* 右：九宫格仪表盘（原样保留卡片样式，仅套一层卡片容器） */
+  .cm-dash-card { background: #fff; border: 2px solid var(--border); border-radius: 18px; box-shadow: 0 6px 20px rgba(124,77,255,.08); padding: 14px; display: flex; flex-direction: column; }
+  .cm-dash-head { font-size: 13px; font-weight: 800; color: #452d80; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+
+  /* —— 右侧浮动：① 入场浮动（每次进入月份详情自动播放，结束移除 class 恢复 hover） —— */
+  .cm-dash-card.cm-anim { animation: cmFloatIn .5s cubic-bezier(.22,.85,.3,1) both; }
+  @keyframes cmFloatIn { 0% { opacity: 0; transform: translateY(18px) scale(.985); } 60% { opacity: 1; } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+  .cm-dash-card.cm-anim .cm-dk { animation: cmCardFloat .52s ease both; }
+  .cm-dash-card.cm-anim .cm-dk:nth-child(1) { animation-delay: .06s; }
+  .cm-dash-card.cm-anim .cm-dk:nth-child(2) { animation-delay: .11s; }
+  .cm-dash-card.cm-anim .cm-dk:nth-child(3) { animation-delay: .16s; }
+  .cm-dash-card.cm-anim .cm-dk:nth-child(4) { animation-delay: .21s; }
+  .cm-dash-card.cm-anim .cm-dk:nth-child(5) { animation-delay: .26s; }
+  .cm-dash-card.cm-anim .cm-dk:nth-child(6) { animation-delay: .31s; }
+  .cm-dash-card.cm-anim .cm-dk:nth-child(7) { animation-delay: .36s; }
+  .cm-dash-card.cm-anim .cm-dk:nth-child(8) { animation-delay: .41s; }
+  .cm-dash-card.cm-anim .cm-dk:nth-child(9) { animation-delay: .46s; }
+  @keyframes cmCardFloat { 0% { opacity: 0; transform: translateY(16px) scale(.94); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+
+  /* —— 右侧浮动：② 持续轻柔浮动（仅父级整体微浮，不压子卡片 hover） —— */
+  .cm-col-r.cm-breathe { animation: cmBreathSoft 3.6s ease-in-out infinite; }
+  @keyframes cmBreathSoft { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 
   .client-filter-modal { width: 620px; max-width: 92vw; }
   .client-filter-modal .modal-body { max-height: 60vh; overflow-y: auto; padding-right: 6px; }
@@ -1939,6 +2045,193 @@
   .search-item .si-snippet { font-size: 12px; color: var(--text-secondary); line-height: 1.5; word-break: break-word; }
   .search-empty, .search-hint { padding: 28px 18px; text-align: center; color: var(--text-light); font-size: 14px; }
   mark { background: #ffe9a8; color: inherit; padding: 0 1px; border-radius: 3px; }
+
+  /* ============================================================
+     深色主题（浅2号）覆写：仅在 [data-theme="dark"] 时生效
+     原「全局深色覆写块」现限定作用域，使浅色（樱粉暖调）可正常显示；
+     深色变量 + 表面覆写一并放入本作用域。
+     ============================================================ */
+  [data-theme="dark"] {
+    /* ===== 深色变量（浅2号）===== */
+    --bg: #283040;
+    --card-bg: #2f3846;
+    --sidebar-bg: #222932;
+    --primary: #e3c68c;
+    --primary-light: rgba(227,198,140,0.16);
+    --primary-dark: #c8ac6d;
+    --accent: #d3bc95;
+    --accent-light: rgba(227,198,140,0.14);
+    --text-main: #f0eee7;
+    --text-secondary: #beb8ae;
+    --text-light: #bcb6ab;
+    --text: #f0eee7;
+    --border: #444d5b;
+    --bg-soft: #2f3846;
+    --input-bg: #2b3443;
+    --surface-2: #394250;
+    --surface-3: #454f5e;
+    --hover-bg: rgba(255,255,255,0.06);
+    --success: #7fae8f;
+    --success-light: rgba(127,174,143,0.12);
+    --warning: #e3c68c;
+    --warning-light: rgba(227,198,140,0.16);
+    --info: #8aa9c2;
+    --info-light: rgba(138,169,194,0.12);
+    --shadow: 0 2px 12px rgba(0,0,0,0.40);
+    --shadow-hover: 0 4px 20px rgba(0,0,0,0.55);
+    --radius: 16px;
+    --radius-sm: 10px;
+
+    /* ===== 原深色表面覆写（限定 dark 作用域）===== */
+    body { color: var(--text-main); }
+
+  /* 表单控件（全局） */
+  input[type="text"], input[type="number"], input[type="date"],
+  input[type="datetime-local"], input[type="email"], input[type="password"],
+  input[type="search"], input[type="url"], select, textarea {
+    background: var(--input-bg) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* 模态框外层 */
+  .modal { background: var(--card-bg) !important; color: var(--text-main) !important; }
+
+  /* —— 全站白底表面统一转深色 surface-2 —— */
+  .client-detail-card,
+  .client-records-section,
+  .record-item,
+  .record-form,
+  .recommend-detail-box,
+  .recommend-preview,
+  .client-action-btn,
+  .client-back-btn,
+  .client-list-item,
+  .record-mini-btn,
+  .stat-box,
+  .client-category,
+  .add-task-select,
+  .add-task-seg,
+  .channel-pill,
+  .memo-mic-btn,
+  .tn-card,
+  .cm-dash-card,
+  .client-kpi,
+  .client-stat,
+  .cm-month-item,
+  .cm-dk,
+  .cm-cat-name,
+  .book-card,
+  .task-checkbox,
+  .area-pill,
+  .cal-client-item,
+  .cm-cal-card,
+  .clipboard-item,
+  .cm-panel,
+  .client-modal-section,
+  .cm-cal-tot,
+  .col-cover {
+    background: var(--surface-2) !important;
+  }
+
+  /* 客户详情：字段多行框 / 推荐房源块 / 录入预览 */
+  .client-detail-item .detail-value.multiline { background: var(--surface-3) !important; }
+  .recommend-detail-box { border-color: var(--border) !important; }
+  .recommend-detail-head { color: var(--accent) !important; }
+  .recommend-detail-body { color: var(--text-main) !important; }
+  .recommend-preview { border-color: var(--border) !important; }
+  .records-section-title .rec-count,
+  .cm-cat-count,
+  .cm-cat-icon.amount, .cm-cat-icon.high, .cm-cat-icon.medium, .cm-cat-icon.low,
+  .priority-low,
+  .cal-client-item .cci-reception { background: var(--surface-3) !important; }
+
+  /* 按钮 / 标签 / 列表项的文字与边框 */
+  .client-action-btn, .client-back-btn, .client-list-item, .record-mini-btn,
+  .channel-pill, .area-pill, .memo-mic-btn, .cm-cat-name {
+    color: var(--text-secondary) !important;
+    border-color: var(--border) !important;
+  }
+  .client-list-item:hover,
+  .client-action-btn:hover, .client-back-btn:hover,
+  .record-mini-btn:hover { border-color: var(--primary) !important; color: var(--primary) !important; }
+  .client-list-item:hover { background: var(--hover-bg) !important; }
+  .client-action-btn.danger:hover,
+  .record-mini-btn.danger:hover { background: rgba(192,57,43,.18) !important; color: #e88b80 !important; }
+
+  /* 悬停态 */
+  .task-item:hover,
+  .client-card-header:hover,
+  .work-todo-item:hover,
+  .cm-dk:hover { background: var(--hover-bg) !important; }
+  .cm-dk:hover { border-color: var(--primary) !important; }
+
+  /* 仪表盘 / 九宫格 */
+  .cm-dash-card { border-color: var(--border) !important; box-shadow: 0 6px 20px rgba(0,0,0,.35) !important; }
+  .cm-dash-head { color: var(--accent) !important; }
+  .stat-tabs { background: var(--surface-3) !important; }
+  .stat-tab.active { background: var(--surface-2) !important; color: var(--primary) !important; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+  .storage-meter .sm-bar { background: var(--surface-3) !important; }
+  .client-kpi.kpi-sales { background: linear-gradient(135deg,#4a3e2a,#3a3020) !important; }
+
+  /* 客户渠道标签（原深紫硬编 → 金色，保证可读） */
+  .client-card-meta .channel-tag, .channel-tag {
+    background: var(--accent-light) !important; color: var(--accent) !important;
+  }
+
+  /* 接待日历 */
+  .cm-cal-day { background: var(--surface-2) !important; border-color: var(--border) !important; }
+  .cm-cal-day.no { background: #2b3443 !important; }
+  .cm-cal-day.has { background: linear-gradient(160deg,#394250,#2f3846) !important; }
+  .cm-cal-day.today { background: #4a3e2a !important; border-color: var(--primary) !important; box-shadow: 0 0 0 3px rgba(201,168,107,.25) !important; }
+  .cm-cal-day.today .num { color: var(--primary) !important; }
+  .cm-cal-nav { background: #4a3e2a !important; }
+  .cm-cal-nav button { background: var(--surface-2) !important; color: var(--primary) !important; box-shadow: 0 1px 3px rgba(0,0,0,.4) !important; }
+
+  /* 备忘录卡片 */
+  .memo-item, .memo-item.white { background: var(--surface-2) !important; border-color: var(--border) !important; }
+  .memo-item.blue { background: var(--surface-3) !important; border-color: var(--border) !important; }
+  .memo-item.pink { background: var(--surface-3) !important; border-color: var(--border) !important; }
+
+  /* 状态色块：浅底深字 → 暗底浅字（保证对比度） */
+  .intent-high, .client-intent-chip.high, .priority-high {
+    background: rgba(192,57,43,.18) !important; color: #e88b80 !important;
+  }
+  .priority-medium { background: var(--warning-light) !important; color: var(--warning) !important; }
+  .priority-low { color: var(--text-light) !important; }
+  /* v76：接待日历「新访/复访」药丸 → 米色底 + 蓝色字（解决低对比、提升可读性）
+     .n = 新访(原粉底粉字)，.r = 复访(原杏底橙字)；点前小圆点保留原色以对应图例。 */
+  .cm-cal-pill.n, .cm-cal-pill.r,
+  .cal-client-item .fv-badge, .cal-client-item .rv-badge {
+    background: #f3e9d2 !important; color: #1a4f8a !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,.35) !important;
+  }
+  .cal-client-item .cci-time {
+    background: rgba(232,154,53,.16) !important; color: #e7b277 !important;
+  }
+
+  /* 彩色强调保持不变：开关/进度/头像渐变等 */
+  .cm-toggle-on { background: var(--primary) !important; color: #283040 !important; border-color: var(--primary) !important; }
+  .book-progress-bar { background: var(--surface-3) !important; }
+
+  /* —— 移动端专属 / 浮层组件（桌面端常隐藏，手机端会露出白底，需显式转深色）—— */
+  .menu-toggle { background: var(--card-bg) !important; color: var(--text-main) !important; border-color: var(--border) !important; }
+  .sync-bar { background: var(--surface-2) !important; color: var(--text-secondary) !important; }
+  .sync-bar:hover { background: var(--primary-light) !important; color: var(--primary) !important; }
+  .mobile-nav { background: var(--card-bg) !important; border-top-color: var(--border) !important; box-shadow: 0 -2px 12px rgba(0,0,0,0.35) !important; }
+  .mobile-nav-popup { background: var(--card-bg) !important; border-color: var(--border) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.45) !important; }
+  .mobile-nav-item, .mobile-nav-more { color: var(--text-secondary) !important; }
+  .mobile-nav-item:active, .mobile-nav-more:active { color: var(--primary) !important; }
+  .mobile-nav-popup-item { color: var(--text-main) !important; }
+  .mobile-nav-popup-item:active { background: var(--primary-light) !important; color: var(--primary) !important; }
+  .search-btn { background: var(--card-bg) !important; color: var(--text-main) !important; border-color: var(--border) !important; }
+  .search-overlay .search-panel { background: var(--card-bg) !important; color: var(--text-main) !important; border-color: var(--border) !important; box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important; }
+
+  /* 深色补丁：首页「日期卡」与仪表盘「成交总额」卡（浅色下为浅粉亮块，深色下需暗金渐变） */
+  .calendar-card { background: linear-gradient(135deg,#3a3324 0%,#2f3846 100%) !important; border-color: var(--border) !important; }
+  .dash-card.accent { background: linear-gradient(135deg,#4a3e2a,#3a3020) !important; }
+  .dash-card.accent .dash-num { color: var(--primary) !important; }
+  }
 </style>
 </head>
 <body data-page-node-id="fyYhVfzERCm4xrFNBsQsND">
@@ -2376,19 +2669,7 @@
       <ul class="reflection-list" id="reflectionList" data-page-node-id="zwX7CgUXgD0BMGzh6BjLeX"></ul>
     </div>
 
-    <!-- ===== 科技资讯（每日 8:30 自动推送） ===== -->
-    <div class="card module-card" id="technews" data-page="technews" data-page-node-id="OeQtjJLa6jA6eoG1Sd2Be2">
-      <div class="card-header" data-page-node-id="mow187RUuEpzHpNnpkiT3A">
-        <div class="card-title" data-page-node-id="yLjjOy4u7aUDwjLYwSGEWP"><span class="icon" data-page-node-id="tASJJLUIlEAjWXnYkQ3hGg">🛰️</span> 科技资讯 <span class="technews-date" id="techNewsDate" data-page-node-id="3adQNEfHpTCLoITdbfeb7B"></span></div>
-        <div class="card-actions" data-page-node-id="Fa4iCIIJ7JrMW3vpdtNO6X">
-          <button class="btn btn-outline btn-sm" onclick="fetchTechNewsFeed(true)" data-page-node-id="ggFeR3Osl324PwHVJBofqF">↻ 立即刷新</button>
-        </div>
-      </div>
-      <div class="technews-toolbar" data-page-node-id="3v8uNpwFIHkAt3Owey44Yl">
-        <span class="technews-sub" data-page-node-id="vVKnRJajOwcMEPiHQOgM7Z">每日 8:30 自动推送 · 多源聚合去重 · 按热度 Top10</span>
-      </div>
-      <div id="techNewsList" class="technews-list" data-page-node-id="XtBBzn7vwk2XBPw5SKEPJD"></div>
-    </div>
+    <!-- 科技资讯模块已停用（数据长期停留在本地、未部署到服务器/云端，2026-09-24） -->
 
     <!-- ===== 内容收藏（链接收集 + 智能摘要 + 分类管理） ===== -->
     <div class="card module-card" id="collection" data-page="collection" data-page-node-id="aGPGlCqc5iJP3vmE0SEZcK">
@@ -2582,16 +2863,11 @@
           <span class="ec-month-total" id="ecMonthTotal" data-page-node-id="oTtuzI5SCVJei2VIeqeE3o"></span>
         </div>
       </div>
-      <!-- 日历日消费明细弹窗 -->
-      <div class="modal-overlay" id="calDayModal" onclick="if(event.target===this)closeCalDayModal()" data-page-node-id="TRvZ92gofVHNx2JXfPd6zy">
-        <div class="modal cal-day-modal" data-page-node-id="dPiYoQyXNttiIqY64d8Kf6">
-          <div class="cal-day-modal-head" data-page-node-id="h4dQjjBYPGFfv1NGdx2jUV">
-            <h3 id="calDayTitle" data-page-node-id="GViGnopNgyERNcJApCk34a"></h3>
-            <button class="modal-close" type="button" onclick="closeCalDayModal()" data-page-node-id="KewXd8yESsQbmy3i56iUXs">✕</button>
-          </div>
-          <div class="cal-day-body" id="calDayBody" data-page-node-id="UbAvczNmJYKrjj769Zvp1D"></div>
-        </div>
-      </div>
+      <!-- v70: 日历日明细弹窗原先放在这里（记账模块卡片内部），
+           导致在「客户接待」等其它页面点日期时，弹窗虽被加上 .show，
+           但父级 .module-card 处于 display:none（见 body.page-mode 规则），
+           整个弹窗不渲染 → 表现为「点了没反应」。
+           已移到 </main> 之外的程序顶层，ID 全部保持不变。 -->
       <div class="expense-day-total" id="expenseDayTotal" data-page-node-id="Mo8dMBHIifoZU3ejR71rS0"></div>
       <div class="expense-list-head" data-page-node-id="CzaktBmF8kcBGHHthW2S4z">
         <span id="expenseListDateLabel" data-page-node-id="tUrgKPvmgtwKuim4TbsMiX">📅 今日</span>
@@ -2601,6 +2877,19 @@
     </div>
   </div>
 </main>
+
+<!-- 日历日明细弹窗（记账日历「当天消费」+ 接待日历「当天客户」共用）
+     ⚠️ 必须放在 </main> 之外的顶层：模块卡片 .module-card 在非当前页时是 display:none，
+     弹窗若嵌在某个模块卡片内，切到别的页面点日期就会「点了没反应」。（v70 修复） -->
+<div class="modal-overlay" id="calDayModal" onclick="if(event.target===this)closeCalDayModal()" data-page-node-id="TRvZ92gofVHNx2JXfPd6zy">
+  <div class="modal cal-day-modal" data-page-node-id="dPiYoQyXNttiIqY64d8Kf6">
+    <div class="cal-day-modal-head" data-page-node-id="h4dQjjBYPGFfv1NGdx2jUV">
+      <h3 id="calDayTitle" data-page-node-id="GViGnopNgyERNcJApCk34a"></h3>
+      <button class="modal-close" type="button" onclick="closeCalDayModal()" data-page-node-id="KewXd8yESsQbmy3i56iUXs">✕</button>
+    </div>
+    <div class="cal-day-body" id="calDayBody" data-page-node-id="UbAvczNmJYKrjj769Zvp1D"></div>
+  </div>
+</div>
 
 <!-- ===== 客户接待录入 Modal ===== -->
 <div class="modal-overlay" id="clientModal" data-page-node-id="N1rSa2X1D7mrqVLmFrOq0y">
@@ -2927,7 +3216,7 @@
 
 <script>
 // 当前版本号（每次发布递增）。用于侧栏显示 + Service Worker 更新提示。
-const APP_VERSION = 'v65';
+const APP_VERSION = 'v79';
 
 // 全局错误捕获：任何 JS 报错都显示到屏幕顶部红条，避免「点了没反应」却不知原因
 window.addEventListener('error', function (e) {
@@ -3349,7 +3638,6 @@ function renderAll() {
   renderXhsPosts();
   renderFootprints();
   renderReflections();
-  renderTechNews();
   renderCollections();
 }
 
@@ -3781,8 +4069,9 @@ function loadData(raw) {
       if (!parsed.xhsPosts) parsed.xhsPosts = JSON.parse(JSON.stringify(defaultXhsPosts));
       if (!parsed.reviews) parsed.reviews = [];
       if (!parsed.expenses) parsed.expenses = [];
+      // 科技资讯模块已停用（v72 移除）。以下两个字段仅为兼容历史数据结构而保留，
+      // 不再参与任何渲染/拉取逻辑。（切勿在此调用已删除的 dedupeTechNews，会导致启动期崩溃）
       if (!parsed.techNews) parsed.techNews = [];
-      parsed.techNews = dedupeTechNews(parsed.techNews);
       if (!parsed.techNewsFeedDate) parsed.techNewsFeedDate = '';
       if (!parsed.collections) parsed.collections = [];
       if (!parsed.clients) parsed.clients = [];
@@ -4180,11 +4469,11 @@ function renderTasks() {
       if (task.segments && task.segments.length > 1) {
         const segDone = task.segments.filter(Boolean).length;
         const dots = task.segments.map((s, i) =>
-          `<div class="seg-dot ${s ? 'checked' : ''}" onclick="toggleTaskSegment(${task.id}, ${i})">${i + 1}</div>`
+          `<div class="seg-dot ${s ? 'checked' : ''}" onclick="toggleTaskSegment(${inlineIdLiteral(task.id)}, ${i})">${i + 1}</div>`
         ).join('');
         checkArea = `<div class="seg-dots">${dots}<span class="seg-progress">${segDone}/${task.segments.length}</span></div>`;
       } else {
-        checkArea = `<div class="task-checkbox ${done ? 'checked' : ''}" onclick="toggleTask(${task.id})"></div>`;
+        checkArea = `<div class="task-checkbox ${done ? 'checked' : ''}" onclick="toggleTask(${inlineIdLiteral(task.id)})"></div>`;
       }
       return `
       <li class="task-item ${done ? 'done' : ''}">
@@ -4193,8 +4482,8 @@ function renderTasks() {
           <span class="task-text">${task.text}</span>
           <span class="task-tag tag-${task.tag}">${getTagName(task.tag)}</span>
         </div>
-        <button class="task-edit" onclick="editTask(${task.id})" title="编辑">✏️</button>
-        <button class="task-delete" onclick="deleteTask(${task.id})" title="删除">×</button>
+        <button class="task-edit" onclick="editTask(${inlineIdLiteral(task.id)})" title="编辑">✏️</button>
+        <button class="task-delete" onclick="deleteTask(${inlineIdLiteral(task.id)})" title="删除">×</button>
       </li>`;
     }).join('');
   }
@@ -4342,176 +4631,16 @@ function checkDayRollover() {
     saveData();
     renderAll();
   }
-  // 科技资讯：到达 8:30 且今日尚未拉取，则自动从聚合源拉取当日推送
-  techNewsAutoCheck();
+  // （科技资讯模块已停用，不再自动拉取，2026-09-24）
   // 自动清理已完成的 TO DO：每天定时执行，删除完成日期早于今天的已完成项，
   // 今天刚完成的保留到次日（跨午夜/长开均能触发，因本函数每分钟检查）
   cleanupCompletedTodos();
-}
-
-// ===== 科技资讯：每日 8:30 多源聚合推送 =====
-// 数据来源：由每日自动化任务采集权威科技媒体/官方渠道，写入同源 ./tech-news.json
-// （含 date 与 items 数组）。工作台在 8:30 后自动拉取，按 dedupKey 去重合并、
-// 按热度降序取 Top10，并在站内弹出推送通知。若当日内容不足 10 条则按实际条数推送。
-function techNewsAutoCheck() {
-  try {
-    const now = new Date();
-    const hh = now.getHours(), mm = now.getMinutes();
-    const after830 = hh > 8 || (hh === 8 && mm >= 30);
-    if (!after830) return;                       // 未到推送时间
-    if (data.techNewsFeedDate === today) return; // 今日已拉取
-    fetchTechNewsFeed(false);
-  } catch (e) { console.error('techNewsAutoCheck', e); }
-}
-
-function fetchTechNewsFeed(manual) {
-  const listEl = document.getElementById('techNewsList');
-  if (manual && listEl) listEl.innerHTML = '<div class="technews-loading">正在拉取今日科技资讯…</div>';
-  fetch('./tech-news.json?t=' + Date.now(), { cache: 'no-store' })
-    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(feed => {
-      const items = Array.isArray(feed.items) ? feed.items : [];
-      const feedDate = feed.date || today;
-      if (!items.length) {
-        data.techNewsFeedDate = feedDate;
-        saveData();
-        renderTechNews();
-        if (manual) showTechToast('今日暂无符合条件的科技资讯');
-        return;
-      }
-      const seen = new Set((data.techNews || []).map(techNewsDedupKey));
-      let added = 0;
-      items.forEach(it => {
-        const key = techNewsDedupKey(it);
-        if (seen.has(key)) return;             // 去重：同源/跨源重复只保留一条
-        seen.add(key);
-        (data.techNews = data.techNews || []).push({
-          id: it.id || ('tn_' + key),
-          dedupKey: it.dedupKey || '',
-          date: feedDate,
-          title: it.title || '(无标题)',
-          source: it.source || '未知来源',
-          url: it.url || '',
-          type: it.type === 'video' ? 'video' : 'article',
-          summary: it.summary || '',
-          heat: Number(it.heat || 0),
-          tags: Array.isArray(it.tags) ? it.tags : [],
-          embedUrl: it.embedUrl || '',
-          thumbUrl: it.thumbUrl || ''
-        });
-        added++;
-      });
-      data.techNewsFeedDate = feedDate;
-      (data._techFetchedDates = data._techFetchedDates || {})[feedDate] = true;
-      saveData();
-      renderTechNews();
-      if (added > 0) { showTechToast('已推送 ' + added + ' 条今日科技资讯'); flashTechBadge(); }
-      else if (manual) showTechToast('已是最新（今日无新增）');
-    })
-    .catch(err => {
-      console.error('fetchTechNewsFeed', err);
-      if (manual) showTechToast('拉取失败：' + err.message);
-      if (listEl && !listEl.children.length) renderTechNews();
-    });
-}
-
-function techNewsDedupKey(it) {
-  if (it && it.url && String(it.url).trim()) return 'u:' + String(it.url).trim();
-  return 't:' + normTitle(it && it.title);
-}
-function dedupeTechNews(arr) {
-  if (!Array.isArray(arr)) return [];
-  const seen = new Set();
-  const out = [];
-  arr.forEach(x => {
-    if (!x || typeof x !== 'object') return;
-    const k = techNewsDedupKey(x);
-    if (seen.has(k)) return;
-    seen.add(k);
-    out.push(x);
-  });
-  return out;
-}
-function normTitle(t) {
-  return String(t || '').toLowerCase().replace(/[\s \p{P}]+/gu, '').slice(0, 80);
-}
-
-function renderTechNews() {
-  const listEl = document.getElementById('techNewsList');
-  const dateEl = document.getElementById('techNewsDate');
-  if (!listEl) return;
-  const feedDate = data.techNewsFeedDate || '';
-  if (dateEl) dateEl.textContent = feedDate ? ('· ' + feedDate) : '';
-  // 仅展示最近一次推送日期的内容（往期保留在 data.techNews 但不主显）
-  // 渲染前再次去重，确保即使历史数据被污染也绝不显示重复条目
-  const seen = new Set();
-  const items = (data.techNews || [])
-    .filter(x => x.date === feedDate)
-    .sort((a, b) => (b.heat || 0) - (a.heat || 0))
-    .filter(x => { const k = techNewsDedupKey(x); if (seen.has(k)) return false; seen.add(k); return true; })
-    .slice(0, 10);
-  if (!items.length) {
-    listEl.innerHTML = '<div class="empty-state"><div class="emoji">🛰️</div>今日科技资讯将在每天 8:30 自动推送' +
-      '<div style="font-size:12px;color:var(--text-light);margin-top:6px">多源聚合 · 去重 · 按热度 Top10。也可点右上角「立即刷新」手动获取。</div></div>';
-    return;
-  }
-  listEl.innerHTML = items.map((it, i) => techNewsCardHTML(it, i)).join('');
-}
-
-function techNewsCardHTML(it, rank) {
-  const heat = Number(it.heat || 0);
-  const heatColor = heat >= 80 ? '#e0556e' : heat >= 60 ? '#e8843f' : heat >= 40 ? '#caa23a' : '#9aa0a6';
-  const tags = (it.tags || []).map(t => '<span class="tn-tag">#' + escapeHtml(t) + '</span>').join('');
-  if (it.type === 'video') {
-    const player = it.embedUrl
-      ? '<div class="tn-video"><iframe src="' + escapeAttr(it.embedUrl) + '" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>'
-      : (it.thumbUrl ? '<a class="tn-thumb" href="' + escapeAttr(it.url) + '" target="_blank" rel="noopener"><img src="' + escapeAttr(it.thumbUrl) + '" alt="视频封面"></a>' : '');
-    return '<div class="tn-card tn-video-card">' +
-      '<div class="tn-rank">▶</div>' +
-      '<div class="tn-main">' +
-        '<div class="tn-title"><a href="' + escapeAttr(it.url) + '" target="_blank" rel="noopener">' + escapeHtml(it.title) + '</a></div>' +
-        '<div class="tn-meta"><span class="tn-source">🎬 ' + escapeHtml(it.source) + '</span>' +
-          '<span class="tn-heat" style="color:' + heatColor + '">🔥 ' + heat + '</span>' + tags + '</div>' +
-        player +
-      '</div></div>';
-  }
-  return '<div class="tn-card">' +
-    '<div class="tn-rank">' + (rank + 1) + '</div>' +
-    '<div class="tn-main">' +
-      '<div class="tn-title"><a href="' + escapeAttr(it.url) + '" target="_blank" rel="noopener">' + escapeHtml(it.title) + '</a></div>' +
-      '<div class="tn-meta"><span class="tn-source">📰 ' + escapeHtml(it.source) + '</span>' +
-        '<span class="tn-heat" style="color:' + heatColor + '">🔥 ' + heat + '</span>' + tags + '</div>' +
-      (it.summary ? '<div class="tn-summary">' + escapeHtml(it.summary) + '</div>' : '') +
-      (it.url ? '<a class="tn-origin" href="' + escapeAttr(it.url) + '" target="_blank" rel="noopener">查看原文 ↗</a>' : '') +
-    '</div></div>';
 }
 
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 function escapeAttr(s) { return escapeHtml(s); }
-
-function flashTechBadge() {
-  const b = document.getElementById('techNewsBadge');
-  const nav = document.querySelector('.nav-item[data-page="technews"]');
-  if (!b) return;
-  b.style.display = 'inline-block';
-  setTimeout(() => { if (nav && nav.classList.contains('active')) b.style.display = 'none'; }, 6000);
-}
-
-function showTechToast(msg) {
-  let el = document.getElementById('techNewsToast');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'techNewsToast';
-    el.className = 'technews-toast';
-    document.body.appendChild(el);
-  }
-  el.textContent = '🛰️ ' + msg;
-  el.classList.add('show');
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), 3800);
-}
 
 // ===== 内容收藏：链接收集 + 智能摘要 + 分类管理 =====
 // 后端不可达时自动降级为本地收藏（localStorage），不丢数据。
@@ -4797,7 +4926,7 @@ function renderWorkTodos() {
   } else {
     list.innerHTML = data.workTodos.map(todo => `
       <li class="work-todo-item ${todo.done ? 'done' : ''}">
-        <div class="work-todo-checkbox ${todo.done ? 'checked' : ''}" onclick="toggleWorkTodo(${todo.id})"></div>
+        <div class="work-todo-checkbox ${todo.done ? 'checked' : ''}" onclick="toggleWorkTodo(${inlineIdLiteral(todo.id)})"></div>
         <div class="work-todo-content">
           <div class="work-todo-text">${todo.text}</div>
           <div class="work-todo-meta">
@@ -4805,8 +4934,8 @@ function renderWorkTodos() {
             ${todo.note ? `<span style="font-size:11px;color:var(--text-light)">${todo.note}</span>` : ''}
           </div>
         </div>
-        <button class="work-todo-edit" onclick="editWorkTodo(${todo.id})" title="编辑">✏️</button>
-        <button class="work-todo-delete" onclick="deleteWorkTodo(${todo.id})" title="删除">×</button>
+        <button class="work-todo-edit" onclick="editWorkTodo(${inlineIdLiteral(todo.id)})" title="编辑">✏️</button>
+        <button class="work-todo-delete" onclick="deleteWorkTodo(${inlineIdLiteral(todo.id)})" title="删除">×</button>
       </li>
     `).join('');
   }
@@ -5044,6 +5173,13 @@ function renderClientMonthDetail(panel, ym) {
   let html = '<div class="cm-panel">';
   html += '<div class="cm-crumb" onclick="exitClientMonthDetail()">← 返回月份总览</div>';
   html += `<div class="cm-section-title">${formatClientMonth(ym)} · 客户接待拆解</div>`;
+  // —— 左右两栏（v67）：左=接待日历，右=九宫格 ——
+  html += '<div class="cm-combo">';
+  // 左栏：接待日历
+  html += '<div class="cm-col cm-col-l"><div class="cm-cal-card" id="cmCalCard"></div></div>';
+  // 右栏：九宫格（套卡片容器 + 入场浮动 cm-anim；外层 cm-col-r.cm-breathe 持续轻柔浮动）
+  html += '<div class="cm-col cm-col-r cm-breathe"><div class="cm-dash-card cm-anim">';
+  html += '<div class="cm-dash-head">📊 月度拆解</div>';
   html += '<div class="cm-detail-kpis">';
   html += buildClientMonthCategoryKpi('total', list.length, '客户总量', '查看全部客户');
   html += buildClientMonthCategoryKpi('amount', '¥' + amount.toLocaleString(), '成交总额', '查看成交客户', 'sales');
@@ -5054,7 +5190,9 @@ function renderClientMonthDetail(panel, ym) {
   html += buildClientMonthCategoryKpi('first', rc.first, '首访', '查看首访客户', 'return');
   html += buildClientMonthCategoryKpi('return', rc.ret, '复访', '查看复访客户', 'return');
   html += buildClientMonthCategoryKpi('deal', ic.deal, '成交', '查看成交客户', 'deal');
-  html += '</div>';
+  html += '</div>'; // .cm-detail-kpis
+  html += '</div></div>'; // .cm-dash-card / .cm-col-r
+  html += '</div>'; // .cm-combo
   html += buildMonthPicker(ym);
   if (list.length === 0) {
     html += '<div class="cm-empty">本月暂无客户记录</div>';
@@ -5065,6 +5203,132 @@ function renderClientMonthDetail(panel, ym) {
   }
   html += '</div>';
   panel.innerHTML = html;
+  // 左侧日历（DOM 就绪后注入，避免长字符串拼接）
+  renderReceptionCalendar(document.getElementById('cmCalCard'), ym, list);
+  // 入场浮动结束后移除 cm-anim，恢复九宫格 hover（避免 fill-mode 永久压制 hover）
+  const dc = document.querySelector('.cm-dash-card.cm-anim');
+  if (dc) dc.addEventListener('animationend', function handler(e) {
+    if (e.animationName === 'cmFloatIn') { dc.classList.remove('cm-anim'); dc.removeEventListener('animationend', handler); }
+  });
+}
+
+// 接待日历（v67）：月度拆解左侧展示当月每日「新访/复访」组数
+function renderReceptionCalendar(container, ym, list) {
+  if (!container) return;
+  const m = (ym || '').match(/^(\d{4})-(\d{2})$/);
+  const y = m ? +m[1] : new Date().getFullYear();
+  const mo = m ? +m[2] : (new Date().getMonth() + 1);
+  const days = new Date(y, mo, 0).getDate();
+  const lead = (new Date(y, mo - 1, 1).getDay() + 6) % 7; // 周一起排，前置空数
+  const dayMap = {};
+  (list || []).forEach(c => {
+    const ds = c.dateStr || '';
+    if (ds.slice(0, 7) !== ym || ds.length < 10) return;
+    const d = parseInt(ds.slice(8, 10), 10);
+    if (!d) return;
+    if (!dayMap[d]) dayMap[d] = { n: 0, r: 0 };
+    if (isReturnVisit(c)) dayMap[d].r++; else dayMap[d].n++;
+  });
+  const tYm = (typeof today === 'string') ? today.slice(0, 7) : '';
+  const tDay = (tYm === ym) ? parseInt(today.slice(8, 10), 10) : 0;
+  let totalN = 0, totalR = 0;
+  const cell = d => {
+    if (d === null) return '<div class="cm-cal-day empty"></div>';
+    const dm = dayMap[d] || { n: 0, r: 0 };
+    totalN += dm.n; totalR += dm.r;
+    const cls = 'cm-cal-day' + ((dm.n + dm.r) ? ' has' : ' no') + (d === tDay ? ' today' : '');
+    const click = ' onclick="openReceptionDay(\'' + ym + '\',' + d + ')"';
+    let pills = '';
+    if (dm.n) pills += '<span class="cm-cal-pill n">新 ' + dm.n + '</span>';
+    if (dm.r) pills += '<span class="cm-cal-pill r">复 ' + dm.r + '</span>';
+    let inner = '<div class="num">' + d + '</div>' + (pills ? '<div class="cm-cal-pills">' + pills + '</div>' : '');
+    if (d === tDay) inner += '<span class="tdy">今天</span>';
+    return '<div class="' + cls + '"' + click + '>' + inner + '</div>';
+  };
+  let grid = '';
+  for (let i = 0; i < lead; i++) grid += cell(null);
+  for (let d = 1; d <= days; d++) grid += cell(d);
+  const pad = (7 - ((lead + days) % 7)) % 7;
+  for (let p = 0; p < pad; p++) grid += cell(null);
+  const prev = cmAdjacentMonth(ym, -1), next = cmAdjacentMonth(ym, 1);
+  container.innerHTML =
+    '<div class="cm-cal-head">' +
+      '<div class="cm-cal-title">🌸 接待日历</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+        '<div class="cm-cal-legend"><span class="lg-n"><i></i>新访</span><span class="lg-r"><i></i>复访</span></div>' +
+        '<div class="cm-cal-nav"><button type="button" onclick="enterClientMonth(\'' + prev + '\')">‹</button>' +
+          '<span>' + y + '年' + mo + '月</span>' +
+          '<button type="button" onclick="enterClientMonth(\'' + next + '\')">›</button></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="cm-cal-wk"><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div class="we">六</div><div class="we">日</div></div>' +
+    '<div class="cm-cal-grid">' + grid + '</div>' +
+    '<div class="cm-cal-foot"><div class="cm-cal-totals">' +
+      '<div class="cm-cal-tot n"><span class="k">新访</span><span class="v">' + totalN + '</span><span class="u">组</span></div>' +
+      '<div class="cm-cal-tot r"><span class="k">复访</span><span class="v">' + totalR + '</span><span class="u">组</span></div>' +
+      '<div class="cm-cal-tot a"><span class="k">合计</span><span class="v">' + (totalN + totalR) + '</span><span class="u">组</span></div>' +
+    '</div><div class="hint">👆 点任意日期看当天客户</div></div>';
+}
+
+// 从客户记录 id 推导「接待时间」：客户 id 即录入时的 Date.now() 毫秒时间戳
+// 非时间戳（自增 id 等历史/导入数据）返回空串，界面自动隐藏该字段
+function clientTimeLabel(c) {
+  const t = Number(c && c.id);
+  if (!t || t < 946684800000 || t > 4102444800000) return ''; // 2000-01-01 ~ 2100-01-01
+  const dt = new Date(t);
+  return String(dt.getHours()).padStart(2, '0') + ':' + String(dt.getMinutes()).padStart(2, '0');
+}
+
+// 点击接待日历的某一天 → 弹窗展示当天接待的客户列表（含姓名与关键接待信息）
+function openReceptionDay(ym, d) {
+  const modal = document.getElementById('calDayModal');
+  const title = document.getElementById('calDayTitle');
+  const body = document.getElementById('calDayBody');
+  if (!modal) return;
+  const ds = ym + '-' + String(d).padStart(2, '0');
+  const list = (data.clients || []).filter(c => (c.dateStr || '').slice(0, 10) === ds);
+  list.sort((a, b) => (b.id || 0) - (a.id || 0)); // 新录入在前
+  const n = list.filter(c => !isReturnVisit(c)).length;
+  const r = list.length - n;
+  if (title) title.textContent = ds + ' · 接待 ' + list.length + ' 组（新访 ' + n + ' / 复访 ' + r + '）';
+  if (body) {
+    if (list.length === 0) {
+      body.innerHTML = '<div class="empty-state"><div class="emoji">🌸</div>这一天没有接待记录</div>';
+    } else {
+      const rows = list.map(c => {
+        const tm = clientTimeLabel(c);
+        return `
+        <div class="cal-client-item" onclick="closeCalDayModal(); openClientDetail(${inlineIdLiteral(c.id)})">
+          <div class="cci-head">
+            <div class="cci-avatar">${(c.name || '?').charAt(0)}</div>
+            <div class="cci-name">${escapeHtml(c.name || '')}</div>
+            ${tm ? '<span class="cci-time">🕒 ' + tm + '</span>' : ''}
+            <span class="intent-badge intent-${c.intent || 'medium'}">${getIntentName(c.intent)}</span>
+            ${isReturnVisit(c) ? '<span class="rv-badge">复访</span>' : '<span class="fv-badge">新访</span>'}
+          </div>
+          <div class="cci-meta">
+            ${c.phone ? '<span>📱 ' + maskPhone(c.phone) + '</span>' : ''}
+            ${c.channel ? '<span>📍 ' + escapeHtml(c.channel) + '</span>' : ''}
+            ${c.budget ? '<span>💰 ' + Number(c.budget).toLocaleString() + '万</span>' : ''}
+            ${c.keyPerson ? '<span>👤 ' + escapeHtml(c.keyPerson) + '</span>' : ''}
+          </div>
+          ${c.reception ? '<div class="cci-reception">📝 ' + escapeHtml(c.reception) + '</div>' : ''}
+        </div>`;
+      }).join('');
+      body.innerHTML = rows + '<div class="cci-tip">点客户卡片可打开完整记录 →</div>';
+    }
+  }
+  modal.classList.add('show');
+}
+
+// 月份加减（用于日历左右箭头切换）
+function cmAdjacentMonth(ym, delta) {
+  const m = (ym || '').match(/^(\d{4})-(\d{2})$/);
+  if (!m) return ym || '';
+  let y = +m[1], mo = +m[2] + delta;
+  if (mo < 1) { mo = 12; y--; }
+  if (mo > 12) { mo = 1; y++; }
+  return y + '-' + String(mo).padStart(2, '0');
 }
 
 const CLIENT_CATEGORY_LABELS = {
@@ -5173,7 +5437,7 @@ function getClientCardHtml(c, defaultExpanded, detailMode) {
   // detailMode: 在筛选明细弹窗中作为“目录项”，点击进入单个客户详情（层级递进）
   if (detailMode) {
     return `
-      <li class="client-list-item" id="clientItem-${c.id}" onclick="openClientDetail(${c.id})">
+      <li class="client-list-item" id="clientItem-${c.id}" onclick="openClientDetail(${inlineIdLiteral(c.id)})">
         <div class="client-avatar">${clientAvatarInner(c)}</div>
         <div class="client-card-info">
           <div class="client-card-name">
@@ -5195,7 +5459,7 @@ function getClientCardHtml(c, defaultExpanded, detailMode) {
   }
   return `
     <li class="client-card${defaultExpanded ? ' expanded' : ''}" id="clientCard-${c.id}">
-      <div class="client-card-header" onclick="toggleClientCard(${c.id})">
+      <div class="client-card-header" onclick="toggleClientCard(${inlineIdLiteral(c.id)})">
         <div class="client-avatar">${clientAvatarInner(c)}</div>
         <div class="client-card-info">
           <div class="client-card-name">
@@ -5229,8 +5493,8 @@ function getClientCardHtml(c, defaultExpanded, detailMode) {
         ${renderFollowUpsSection(c)}
         ${renderFeedbacksSection(c)}
         <div class="client-card-footer">
-          <button class="client-action-btn" onclick="editClient(${c.id})">✏️ 编辑</button>
-          <button class="client-action-btn danger" onclick="deleteClient(${c.id})">🗑 删除</button>
+          <button class="client-action-btn" onclick="editClient(${inlineIdLiteral(c.id)})">✏️ 编辑</button>
+          <button class="client-action-btn danger" onclick="deleteClient(${inlineIdLiteral(c.id)})">🗑 删除</button>
         </div>
       </div>
     </li>
@@ -5271,7 +5535,7 @@ function maskPhone(phone) {
 // 客户头像内容：有照片显示图片（可点击放大），否则显示姓名首字
 function clientAvatarInner(c) {
   if (c && c.avatar) {
-    return `<img src="${c.avatar}" alt="" onclick="event.stopPropagation();previewClientAvatar(${c.id})">`;
+    return `<img src="${c.avatar}" alt="" onclick="event.stopPropagation();previewClientAvatar(${inlineIdLiteral(c.id)})">`;
   }
   return ((c && c.name) || '?').charAt(0);
 }
@@ -5649,13 +5913,13 @@ function openClientDetail(id) {
           <span class="intent-badge intent-${c.intent || 'medium'}">${getIntentName(c.intent)}</span>
         </div>
         <div class="client-avatar-band">
-          <div class="client-avatar-lg${(_pendingAvatar && _pendingAvatar.id === c.id) || c.avatar ? ' has-photo' : ''}" id="clientAvatarPreview" ${(_pendingAvatar && _pendingAvatar.id === c.id) || c.avatar ? `onclick="previewClientAvatar(${c.id})"` : ''}>${(_pendingAvatar && _pendingAvatar.id === c.id) ? `<img src="${_pendingAvatar.dataUrl}">` : (c.avatar ? `<img src="${c.avatar}">` : ((c.name || '?').charAt(0)))}</div>
+          <div class="client-avatar-lg${(_pendingAvatar && _pendingAvatar.id === c.id) || c.avatar ? ' has-photo' : ''}" id="clientAvatarPreview" ${(_pendingAvatar && _pendingAvatar.id === c.id) || c.avatar ? `onclick="previewClientAvatar(${inlineIdLiteral(c.id)})"` : ''}>${(_pendingAvatar && _pendingAvatar.id === c.id) ? `<img src="${_pendingAvatar.dataUrl}">` : (c.avatar ? `<img src="${c.avatar}">` : ((c.name || '?').charAt(0)))}</div>
           <div class="client-avatar-ops">
             <button class="client-action-btn" onclick="document.getElementById('clientAvatarInput').click()">📷 上传头像</button>
-            ${c.avatar ? `<button class="client-action-btn danger" onclick="removeClientAvatar(${c.id})">🗑 删除</button>` : ''}
+            ${c.avatar ? `<button class="client-action-btn danger" onclick="removeClientAvatar(${inlineIdLiteral(c.id)})">🗑 删除</button>` : ''}
             ${(_pendingAvatar && _pendingAvatar.id === c.id) ? `<button class="client-action-btn" style="background:var(--primary);color:#fff" onclick="saveClientAvatar()">💾 保存</button><button class="client-action-btn" onclick="cancelClientAvatar()">取消</button>` : ''}
           </div>
-          <input type="file" id="clientAvatarInput" accept="image/jpeg,image/png" style="display:none" onchange="onClientAvatarSelected(event, ${c.id})">
+          <input type="file" id="clientAvatarInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="onClientAvatarSelected(event, ${inlineIdLiteral(c.id)})">
         </div>
         <div class="client-detail-grid">
           <div class="client-detail-item"><div class="detail-label">手机号码</div><div class="detail-value">${c.phone || '未填写'}</div></div>
@@ -5672,8 +5936,8 @@ function openClientDetail(id) {
         ${renderFollowUpsSection(c)}
         ${renderFeedbacksSection(c)}
         <div class="client-detail-actions">
-          <button class="client-action-btn" onclick="closeClientFilterModal(); editClient(${c.id})">✏️ 编辑</button>
-          <button class="client-action-btn danger" onclick="closeClientFilterModal(); deleteClient(${c.id})">🗑 删除</button>
+          <button class="client-action-btn" onclick="closeClientFilterModal(); editClient(${inlineIdLiteral(c.id)})">✏️ 编辑</button>
+          <button class="client-action-btn danger" onclick="closeClientFilterModal(); deleteClient(${inlineIdLiteral(c.id)})">🗑 删除</button>
         </div>
       </div>
     </div>
@@ -5706,7 +5970,7 @@ function renderFollowUpsSection(c) {
     <div class="client-records-section">
       <div class="records-section-head">
         <div class="records-section-title">📞 跟进记录 <span class="rec-count">${c.followUps.length}</span></div>
-        ${isEditing ? '' : `<button class="client-action-btn" onclick="openFollowUpForm(${c.id}, null)">＋ 添加跟进</button>`}
+        ${isEditing ? '' : `<button class="client-action-btn" onclick="openFollowUpForm(${inlineIdLiteral(c.id)}, null)">＋ 添加跟进</button>`}
       </div>
       <div class="record-list">
   `;
@@ -5724,7 +5988,7 @@ function renderFollowUpsSection(c) {
         </div>
         <div class="record-form-actions">
           <button class="record-mini-btn" onclick="cancelFollowUpForm()">取消</button>
-          <button class="record-mini-btn" style="background:var(--primary);color:#fff;border-color:var(--primary)" onclick="saveFollowUp(${c.id})">保存</button>
+          <button class="record-mini-btn" style="background:var(--primary);color:#fff;border-color:var(--primary)" onclick="saveFollowUp(${inlineIdLiteral(c.id)})">保存</button>
         </div>
       </div>
     `;
@@ -5741,8 +6005,8 @@ function renderFollowUpsSection(c) {
           <div class="record-item-top">
             <div class="record-time">🕒 ${fmtDateTime(f.time) || '未填写时间'}</div>
             <div class="record-actions">
-              <button class="record-mini-btn" onclick="openFollowUpForm(${c.id}, ${f.id})">编辑</button>
-              <button class="record-mini-btn danger" onclick="deleteFollowUp(${c.id}, ${f.id})">删除</button>
+              <button class="record-mini-btn" onclick="openFollowUpForm(${inlineIdLiteral(c.id)}, ${inlineIdLiteral(f.id)})">编辑</button>
+              <button class="record-mini-btn danger" onclick="deleteFollowUp(${inlineIdLiteral(c.id)}, ${inlineIdLiteral(f.id)})">删除</button>
             </div>
           </div>
           ${f.note ? `<div class="record-note">${escapeHtml(f.note)}</div>` : ''}
@@ -5761,7 +6025,7 @@ function renderFeedbacksSection(c) {
     <div class="client-records-section">
       <div class="records-section-head">
         <div class="records-section-title">💬 反馈记录 <span class="rec-count">${c.feedbacks.length}</span></div>
-        ${isEditing ? '' : `<button class="client-action-btn" onclick="openFeedbackForm(${c.id}, null)">＋ 添加反馈</button>`}
+        ${isEditing ? '' : `<button class="client-action-btn" onclick="openFeedbackForm(${inlineIdLiteral(c.id)}, null)">＋ 添加反馈</button>`}
       </div>
       <div class="record-list">
   `;
@@ -5779,7 +6043,7 @@ function renderFeedbacksSection(c) {
         </div>
         <div class="record-form-actions">
           <button class="record-mini-btn" onclick="cancelFeedbackForm()">取消</button>
-          <button class="record-mini-btn" style="background:var(--primary);color:#fff;border-color:var(--primary)" onclick="saveFeedback(${c.id})">保存</button>
+          <button class="record-mini-btn" style="background:var(--primary);color:#fff;border-color:var(--primary)" onclick="saveFeedback(${inlineIdLiteral(c.id)})">保存</button>
         </div>
       </div>
     `;
@@ -5796,8 +6060,8 @@ function renderFeedbacksSection(c) {
           <div class="record-item-top">
             <div class="record-result">${escapeHtml(f.result)}</div>
             <div class="record-actions">
-              <button class="record-mini-btn" onclick="openFeedbackForm(${c.id}, ${f.id})">编辑</button>
-              <button class="record-mini-btn danger" onclick="deleteFeedback(${c.id}, ${f.id})">删除</button>
+              <button class="record-mini-btn" onclick="openFeedbackForm(${inlineIdLiteral(c.id)}, ${inlineIdLiteral(f.id)})">编辑</button>
+              <button class="record-mini-btn danger" onclick="deleteFeedback(${inlineIdLiteral(c.id)}, ${inlineIdLiteral(f.id)})">删除</button>
             </div>
           </div>
           ${f.time ? `<div class="record-note">🕒 ${fmtDateTime(f.time)}</div>` : ''}
@@ -5882,45 +6146,89 @@ function refreshClientCardView(clientId) {
 // ===== 客户头像上传 =====
 let _pendingAvatar = null; // { id, dataUrl }
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024; // 2MB
-const AVATAR_MAX_DIM = 512; // 最长边像素
+const AVATAR_MAX_DIM = 256; // 最长边像素（缩小以降低内存占用与本地存储压力）
+const AVATAR_JPEG_QUALITY = 0.82; // JPEG 压缩质量
+const AVATAR_SAFE_MAX = 4096; // 解码安全上限：超过则先等比缩小，避免低端设备解码时内存溢出
 
 function validateAvatarFile(file) {
-  if (!['image/jpeg', 'image/png'].includes(file.type)) return '仅支持 JPG / PNG 格式';
+  if (!file) return '未选择文件';
+  if (file.size === 0) return '文件为空，请重新选择';
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return '仅支持 JPG / PNG / WebP 格式';
   if (file.size > AVATAR_MAX_BYTES) return '图片过大，请选择 2MB 以内的图片';
   return null;
 }
 
 function onClientAvatarSelected(ev, id) {
-  const file = ev.target.files && ev.target.files[0];
-  if (!file) return;
-  const err = validateAvatarFile(file);
-  if (err) { alert(err); ev.target.value = ''; return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      let w = img.width, h = img.height;
-      if (w > AVATAR_MAX_DIM || h > AVATAR_MAX_DIM) {
-        const scale = Math.min(AVATAR_MAX_DIM / w, AVATAR_MAX_DIM / h);
-        w = Math.round(w * scale); h = Math.round(h * scale);
+  try {
+    const input = ev && ev.target;
+    const file = input && input.files && input.files[0];
+    if (!file) return;
+    const vErr = validateAvatarFile(file);
+    if (vErr) { alert(vErr); try { input.value = ''; } catch (e) {} return; }
+
+    const reader = new FileReader();
+    reader.onerror = function () { alert('文件读取失败，请重试'); try { input.value = ''; } catch (e) {} };
+    reader.onload = function (e) {
+      try {
+        const result = e && e.target && e.target.result;
+        if (!result) { alert('图片读取失败，请换一张试试'); try { input.value = ''; } catch (e2) {} return; }
+        const img = new Image();
+        img.onerror = function () { alert('图片读取失败，请换一张试试'); try { input.value = ''; } catch (e3) {} };
+        img.onload = function () {
+          try {
+            // 读取真实解码尺寸（naturalWidth 比 width 更可靠）
+            let w = img.naturalWidth || img.width || 0;
+            let h = img.naturalHeight || img.height || 0;
+            // 防御：尺寸异常（如 0 维 / 非法数值）直接放弃，避免 AVATAR_MAX_DIM/0 = Infinity → canvas 0 维 → IndexSizeError 崩溃
+            if (!w || !h || !isFinite(w) || !isFinite(h) || w <= 0 || h <= 0) {
+              alert('图片尺寸异常，无法使用，请换一张试试');
+              return;
+            }
+            // 解码安全上限：超大图先等比缩小，防止解码阶段内存溢出导致闪退
+            if (w > AVATAR_SAFE_MAX || h > AVATAR_SAFE_MAX) {
+              const s = Math.min(AVATAR_SAFE_MAX / w, AVATAR_SAFE_MAX / h);
+              w = Math.round(w * s); h = Math.round(h * s);
+            }
+            // 目标头像尺寸
+            let outW = w, outH = h;
+            if (outW > AVATAR_MAX_DIM || outH > AVATAR_MAX_DIM) {
+              const scale = Math.min(AVATAR_MAX_DIM / outW, AVATAR_MAX_DIM / outH);
+              outW = Math.max(1, Math.round(outW * scale));
+              outH = Math.max(1, Math.round(outH * scale));
+            }
+            // 默认回退为原始 data URL；仅在画布可正常导出时才压缩
+            let dataUrl = result;
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = outW; canvas.height = outH;
+              const ctx = canvas.getContext && canvas.getContext('2d');
+              if (ctx) {
+                ctx.drawImage(img, 0, 0, outW, outH);
+                const exported = canvas.toDataURL('image/jpeg', AVATAR_JPEG_QUALITY);
+                if (exported && exported.indexOf('data:image') === 0) dataUrl = exported;
+              }
+            } catch (err2) {
+              // 画布受限（跨域污染 / 尺寸超限等）：保留原始 data URL，不抛异常
+              dataUrl = result;
+            }
+            _pendingAvatar = { id: id, dataUrl: dataUrl };
+            const pv = document.getElementById('clientAvatarPreview');
+            if (pv) pv.innerHTML = '<img src="' + dataUrl + '">';
+            openClientDetail(id); // 重渲染以显示「保存 / 取消」按钮
+          } catch (err3) {
+            alert('处理图片时出错，请换一张或稍后重试');
+          }
+        };
+        img.src = result;
+      } catch (err1) {
+        alert('图片读取失败，请换一张试试');
       }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      let dataUrl;
-      try { dataUrl = canvas.toDataURL('image/jpeg', 0.85); }
-      catch (err2) { dataUrl = e.target.result; }
-      _pendingAvatar = { id: id, dataUrl: dataUrl };
-      const pv = document.getElementById('clientAvatarPreview');
-      if (pv) pv.innerHTML = '<img src="' + dataUrl + '">';
-      openClientDetail(id); // 重渲染以显示「保存 / 取消」按钮
     };
-    img.onerror = () => { alert('图片读取失败，请换一张试试'); ev.target.value = ''; };
-    img.src = e.target.result;
-  };
-  reader.onerror = () => { alert('文件读取失败'); ev.target.value = ''; };
-  reader.readAsDataURL(file);
-  ev.target.value = '';
+    reader.readAsDataURL(file);
+    try { input.value = ''; } catch (e) {}
+  } catch (outer) {
+    alert('上传头像时出现问题，请重试');
+  }
 }
 
 function saveClientAvatar() {
@@ -5929,19 +6237,19 @@ function saveClientAvatar() {
   const c = data.clients.find(x => x.id === id);
   if (c) { c.avatar = _pendingAvatar.dataUrl; saveData(); }
   _pendingAvatar = null;
-  openClientDetail(id);
+  try { openClientDetail(id); } catch (e) {}
 }
 
 function cancelClientAvatar() {
   const id = _pendingAvatar ? _pendingAvatar.id : null;
   _pendingAvatar = null;
-  if (id != null) openClientDetail(id);
+  if (id != null) { try { openClientDetail(id); } catch (e) {} }
 }
 
 function removeClientAvatar(id) {
   const c = data.clients.find(x => x.id === id);
   if (c) { c.avatar = ''; saveData(); }
-  openClientDetail(id);
+  try { openClientDetail(id); } catch (e) {}
 }
 
 let editingClientId = null;
@@ -6255,8 +6563,8 @@ function renderMemos() {
         </div>
         <div class="memo-body">${escapeHtml(m.body)}</div>
         <div class="memo-footer">
-          <button class="client-action-btn" onclick="editMemo(${m.id})">✏️ 编辑</button>
-          <button class="client-action-btn danger" onclick="deleteMemo(${m.id})">删除</button>
+          <button class="client-action-btn" onclick="editMemo(${inlineIdLiteral(m.id)})">✏️ 编辑</button>
+          <button class="client-action-btn danger" onclick="deleteMemo(${inlineIdLiteral(m.id)})">删除</button>
         </div>
       </li>
     `).join('');
@@ -6529,15 +6837,15 @@ function renderXhsPosts() {
         ${p.tip ? `<div class="xhs-post-tip">💡 ${p.tip}</div>` : ''}
       </div>
       <div class="xhs-post-footer">
-        <select class="xhs-status-select" onchange="updateXhsStatus(${p.id}, this.value)">
+        <select class="xhs-status-select" onchange="updateXhsStatus(${inlineIdLiteral(p.id)}, this.value)">
           <option value="idea" ${p.status==='idea'?'selected':''}>💡 想法</option>
           <option value="drafting" ${p.status==='drafting'?'selected':''}>✍️ 草稿中</option>
           <option value="scheduled" ${p.status==='scheduled'?'selected':''}>📅 已排期</option>
           <option value="published" ${p.status==='published'?'selected':''}>✅ 已发布</option>
         </select>
         <div class="xhs-post-actions">
-          <button class="xhs-post-edit" onclick="editXhsPost(${p.id})" title="编辑">✏️</button>
-          <button class="xhs-post-delete" onclick="deleteXhsPost(${p.id})" title="删除">×</button>
+          <button class="xhs-post-edit" onclick="editXhsPost(${inlineIdLiteral(p.id)})" title="编辑">✏️</button>
+          <button class="xhs-post-delete" onclick="deleteXhsPost(${inlineIdLiteral(p.id)})" title="删除">×</button>
         </div>
       </div>
     </div>
@@ -6653,8 +6961,8 @@ function renderLearnings() {
           <span class="learning-date">${l.dateStr || ''}</span>
         </div>
         <div class="learning-content">${l.content}</div>
-        <button class="learning-edit" onclick="editLearning(${l.id})" title="编辑">✏️</button>
-        <button class="learning-delete" onclick="deleteLearning(${l.id})" title="删除">×</button>
+        <button class="learning-edit" onclick="editLearning(${inlineIdLiteral(l.id)})" title="编辑">✏️</button>
+        <button class="learning-delete" onclick="deleteLearning(${inlineIdLiteral(l.id)})" title="删除">×</button>
       </li>
     `).join('');
   }
@@ -6755,7 +7063,7 @@ function renderSupplements() {
         const d = (s.doses && s.doses[0]) || { checked: false, checkedTime: null };
         return `
       <li class="supplement-item ${d.checked ? 'done' : ''}">
-        <div class="supplement-check ${d.checked ? 'checked' : ''}" onclick="toggleSupplement(${s.id}, 0)"></div>
+        <div class="supplement-check ${d.checked ? 'checked' : ''}" onclick="toggleSupplement(${inlineIdLiteral(s.id)}, 0)"></div>
         <div class="supplement-info">
           <span class="supplement-name">${s.name}</span>
           <div class="supp-meta">
@@ -6763,21 +7071,21 @@ function renderSupplements() {
             ${d.checked && d.checkedTime ? `<span class="supplement-time">✓ ${d.checkedTime}</span>` : ''}
           </div>
         </div>
-        <button class="supplement-edit" onclick="editSupplement(${s.id})" title="编辑">✏️</button>
-        <button class="supplement-delete" onclick="deleteSupplement(${s.id})" title="删除">×</button>
+        <button class="supplement-edit" onclick="editSupplement(${inlineIdLiteral(s.id)})" title="编辑">✏️</button>
+        <button class="supplement-delete" onclick="deleteSupplement(${inlineIdLiteral(s.id)})" title="删除">×</button>
       </li>`;
       }
       const doneCount = s.doses.filter(d => d.checked).length;
       const doseHtml = s.doses.map((d, i) => `
-        <div class="dose-pill ${d.checked ? 'on' : ''}" onclick="toggleSupplement(${s.id}, ${i})">${d.slot}${d.checked ? ` ✓${d.checkedTime || ''}` : ''}</div>`).join('');
+        <div class="dose-pill ${d.checked ? 'on' : ''}" onclick="toggleSupplement(${inlineIdLiteral(s.id)}, ${i})">${d.slot}${d.checked ? ` ✓${d.checkedTime || ''}` : ''}</div>`).join('');
       return `
       <li class="supplement-item multi ${doneCount === s.doses.length ? 'done' : ''}">
         <div class="supplement-info">
           <span class="supplement-name">${s.name}</span>
           <span class="sup-days">📅 已打卡 ${s.days || 0} 天</span>
         </div>
-        <button class="supplement-edit" onclick="editSupplement(${s.id})" title="编辑">✏️</button>
-        <button class="supplement-delete" onclick="deleteSupplement(${s.id})" title="删除">×</button>
+        <button class="supplement-edit" onclick="editSupplement(${inlineIdLiteral(s.id)})" title="编辑">✏️</button>
+        <button class="supplement-delete" onclick="deleteSupplement(${inlineIdLiteral(s.id)})" title="删除">×</button>
         <div class="dose-row">${doseHtml}</div>
       </li>`;
     }).join('');
@@ -7102,8 +7410,8 @@ function renderReflections() {
       <li class="reflection-item">
         <div class="reflection-date">${r.dateStr || r.date || ''}</div>
         <div class="reflection-content">${r.content || r.suggestion || ''}</div>
-        <button class="reflection-edit" onclick="editReflection(${r.id})" title="编辑">✏️</button>
-        <button class="reflection-delete" onclick="deleteReflection(${r.id})">✕</button>
+        <button class="reflection-edit" onclick="editReflection(${inlineIdLiteral(r.id)})" title="编辑">✏️</button>
+        <button class="reflection-delete" onclick="deleteReflection(${inlineIdLiteral(r.id)})">✕</button>
       </li>
     `).join('');
   }
@@ -7162,7 +7470,7 @@ function deleteReflection(id) {
 const PAGE_TITLES = {
   home: "Isabel's Work Station", plan: '每日打卡', workTodo: 'TO DO LIST', clients: '客户接待',
   expenses: '记账 · 开销复盘', memo: '备忘录', supplement: '保健品打卡', learning: '学习摘录',
-  reading: '读书计划', xhs: '小红书发布', footprint: 'DONE', review: '每日复盘', technews: '科技资讯', collection: '内容收藏'
+  reading: '读书计划', xhs: '小红书发布', footprint: 'DONE', review: '每日复盘', collection: '内容收藏'
 };
 
 // ===== 模块注册表（单一事实来源）=====
@@ -7207,7 +7515,6 @@ const MODULES = [
     search: { list: () => (data.footprintArchive || []).concat(data.footprints || []), title: f => f.title || '(无标题)', snippet: f => f.content || '', text: f => [f.title, f.content, f.dateStr].join(' ') } },
   { id: 'review', label: '每日复盘', icon: '💡', section: 'work',
     search: { list: () => data.reviews || [], title: r => '复盘 ' + (r.dateStr || ''), snippet: r => r.content || '', text: r => [r.content, r.dateStr].join(' ') } },
-  { id: 'technews', label: '科技资讯', icon: '🛰️', section: 'work', badge: 'techNewsBadge', search: null },
   { id: 'collection', label: '内容收藏', icon: '📥', section: 'work',
     search: { list: () => data.collections || [], title: c => c.title || c.url || '(无标题)',
       snippet: c => [c.platformLabel, c.category, c.note].filter(Boolean).join(' · '), text: c => [c.title, c.url, c.platformLabel, c.category, c.note].join(' ') } },
@@ -7221,22 +7528,17 @@ function unregisterModule(id) { const i = MODULES.findIndex(x => x.id === id); i
 function buildSidebar() {
   const list = document.getElementById('moduleNavList');
   if (!list) return;
-  // 保留已有徽标状态，避免重建后丢失（taskBadge 计数 / techNewsBadge 的 NEW 显示）
+  // 保留已有徽标状态，避免重建后丢失（taskBadge 计数）
   const prevTask = document.getElementById('taskBadge');
-  const prevTech = document.getElementById('techNewsBadge');
   const taskVal = prevTask ? (prevTask.textContent || '0') : '0';
-  const techDisp = (prevTech && prevTech.style && prevTech.style.display && prevTech.style.display !== 'none') ? prevTech.style.display : 'none';
   let html = '';
   MODULES.filter(m => m.section === 'work').forEach(m => {
     html += '<div class="nav-item" data-page="' + m.id + '" onclick="switchPage(\'' + m.id + '\')">'
       + '<span class="nav-icon">' + m.icon + '</span> ' + m.label;
     if (m.badge) {
-      const isTech = (m.badge === 'techNewsBadge');
-      let def, st = '';
-      if (isTech) { def = 'NEW'; st = ' style="display:' + techDisp + '"'; }
-      else if (m.badge === 'taskBadge') { def = taskVal; }
-      else { def = ''; }
-      html += '<span class="nav-badge" id="' + m.badge + '"' + st + '>' + def + '</span>';
+      let def = '';
+      if (m.badge === 'taskBadge') { def = taskVal; }
+      html += '<span class="nav-badge" id="' + m.badge + '">' + def + '</span>';
     }
     html += '</div>';
   });
@@ -7289,7 +7591,6 @@ function switchPage(p) {
   if (p === 'clients') updateClientStats();
   if (p === 'expenses') renderExpenses();
   if (p === 'reading') renderBooks();
-  if (p === 'technews') renderTechNews();
   if (p === 'collection') renderCollections();
   // 进入 DONE 页时强制刷新「今日」列表，确保实时反映刚勾选完成的待办项
   if (p === 'footprint') renderFootprints();
@@ -7342,6 +7643,18 @@ function highlight(text, q) {
   const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return t.replace(new RegExp('(' + safe + ')', 'gi'), '<mark>$1</mark>');
 }
+/* 把结果 id 转成可安全写进内联 onclick 的 JS 字面量。
+   为什么不能直接拼：任务类 id 是字符串（'dt-reading'），裸拼会生成 goToResult('plan',dt-reading)，
+   点击时被解析成 `dt - reading` 求值 → ReferenceError: dt is not defined。
+   为什么不用 JSON.stringify：它产出的是双引号，而 onclick="..." 本身用双引号包裹，
+   字符串 id 会提前把属性截断（如 onclick="goToResult('plan'," 后跟 dt-reading"）→ 属性残缺、
+   点击报语法错误。故统一用【单引号】字面量（HTML 属性内的单引号无需转义，与双引号属性不冲突）。 */
+function inlineIdLiteral(v) {
+  if (typeof v === 'number' && isFinite(v)) return String(v);   // 客户 id 就是数字，原样写
+  if (v == null) return 'null';
+  return "'" + String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/[\r\n]/g, ' ') + "'";
+}
+
 function runSearch() {
   const box = document.getElementById('searchResults');
   const meta = document.getElementById('searchMeta');
@@ -7368,7 +7681,12 @@ function runSearch() {
     arr.slice(0, 30).forEach(r => {
       const title = cfg.title(r.item);
       const snippet = cfg.snippet(r.item);
-      html += '<div class="search-item" onclick="goToResult(\'' + m.id + '\',' + r.item.id + ')">'
+      /* 内联处理器传入 r.item.id 必须经 inlineIdLiteral 安全字面量化：
+         任务类 id 是字符串（'dt-reading'），直接拼会生成 goToResult('plan',dt-reading)，
+         点击时解析成 `dt - reading` 求值而抛 ReferenceError；字符串化的 id 一律用单引号
+         字面量（不会与 onclick 的双引号属性冲突）。
+         goToResult 仅对 page==='clients' 使用 id 打开客户详情，其它模块忽略（无副作用）。 */
+      html += '<div class="search-item" onclick="goToResult(\'' + m.id + '\',' + inlineIdLiteral(r.item.id) + ')">'
         + '<div class="si-title">' + highlight(title, q) + '</div>'
         + (snippet ? '<div class="si-snippet">' + highlight(snippet, q) + '</div>' : '')
         + '</div>';
@@ -7381,6 +7699,10 @@ function goToResult(page, id) {
   closeSearch();
   if (typeof closeDrawer === 'function') closeDrawer();
   switchPage(page);
+  // 客户搜索结果：带 id 时直接打开对应客户详情（其它模块忽略 id，无副作用）
+  if (page === 'clients' && id != null) {
+    openClientDetail(id);
+  }
 }
 document.addEventListener('keydown', function (e) {
   if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); openSearch(); }
@@ -7449,8 +7771,8 @@ function renderExpenses() {
         <span class="e-note">${escapeHtml(e.note || '')}</span>
         <span class="e-amount">¥${Number(e.amount || 0).toLocaleString()}</span>
         <span class="e-date">${e.date || ''}</span>
-        <button class="e-edit" onclick="editExpense(${e.id})" title="编辑">✏️</button>
-        <button class="e-del" onclick="deleteExpense(${e.id})">删除</button>
+        <button class="e-edit" onclick="editExpense(${inlineIdLiteral(e.id)})" title="编辑">✏️</button>
+        <button class="e-del" onclick="deleteExpense(${inlineIdLiteral(e.id)})">删除</button>
       </li>
     `).join('');
   }
@@ -8264,7 +8586,7 @@ if ('serviceWorker' in navigator) {
     // 注意：必须用「带版本号的文件名」注册。平台 CDN 会缓存旧的 sw.js，
     // 若沿用同一文件名，用户端永远拉不到新的 Service Worker（离线能力无法更新）。
     // 每次升级 APP_VERSION 时，请同步创建/更新 sw-v59.js 并改这里。
-    navigator.serviceWorker.register('./sw-v65.js').then(reg => {
+    navigator.serviceWorker.register('./sw-v79.js').then(reg => {
       // 已有旧 SW 在控制页面，而新 SW 已就绪 → 提示更新
       if (reg.waiting && navigator.serviceWorker.controller) {
         showUpdateBanner();
@@ -8334,6 +8656,51 @@ window.IWApp = {
   <div class="lb-hint" data-page-node-id="k7S4jERrDovnAyUE08pV0r">双指捏合缩放 · 拖动平移 · 双击放大/还原 · 点空白处关闭</div>
 </div>
 
-<script src="iw-sync.js?v=65"></script>
+<script src="iw-sync.js?v=79"></script>
+<style>
+/* 主题切换控件：默认停靠右下角（避开顶部工具条），手机端上移到移动底部导航之上 */
+#dt-switch{position:fixed;right:14px;bottom:16px;z-index:2147483647;display:flex;gap:4px;padding:5px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.28)}
+#dt-switch button{border:0;border-radius:9px;padding:7px 11px;font-size:13px;cursor:pointer;background:var(--card-bg);color:var(--text-main)}
+@media (max-width:768px){#dt-switch{bottom:16px;right:10px;padding:4px}#dt-switch button{padding:6px 9px;font-size:12px}}
+</style>
+<div id="dt-switch">
+  <button data-t="system" title="跟随系统">系统</button>
+  <button data-t="light" title="浅色（樱粉暖调）">浅色</button>
+  <button data-t="dark" title="深色（浅2号）">深色</button>
+  <button data-t="clear" title="清除缓存并强制刷新（解决旧手机端缓存）">⟳</button>
+</div>
+<script>
+(function(){
+  var box=document.getElementById('dt-switch'); if(!box) return;
+  function cur(){ var h=location.hash.replace('#',''); if(h==='dark'||h==='light'||h==='system') return h; return localStorage.getItem('iw_theme')||'dark'; }
+  function apply(saved){
+    var dark = saved==='dark' || (saved==='system' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', dark?'dark':'light');
+    var tc = dark ? '#283040' : '#d4839a';
+    var m = document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content', tc);
+    var sb = document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]'); if(sb) sb.setAttribute('content', dark?'black-translucent':'default');
+    [].forEach.call(box.querySelectorAll('button'), function(b){
+      var on = b.getAttribute('data-t')===saved;
+      b.style.background = on ? 'var(--primary)' : 'var(--card-bg)';
+      b.style.color = on ? '#fff' : 'var(--text-main)';
+    });
+  }
+  apply(cur());
+  box.addEventListener('click', function(e){
+    var t = e.target.getAttribute && e.target.getAttribute('data-t'); if(!t) return;
+    if(t==='clear'){
+      try {
+        if(navigator.serviceWorker){ navigator.serviceWorker.getRegistrations().then(function(rs){ rs.forEach(function(r){ r.unregister(); }); }); }
+        if(window.caches){ caches.keys().then(function(ks){ ks.forEach(function(k){ caches.delete(k); }); }); }
+      } catch(_){}
+      location.reload(true); return;
+    }
+    if(location.hash) location.hash='';
+    localStorage.setItem('iw_theme', t); apply(t);
+  });
+  var mq = matchMedia('(prefers-color-scheme: dark)');
+  if(mq.addEventListener){ mq.addEventListener('change', function(){ if(cur()==='system') apply('system'); }); }
+})();
+</script>
 </body>
 </html>
