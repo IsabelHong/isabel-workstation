@@ -3317,7 +3317,7 @@
 
 <script>
 // 当前版本号（每次发布递增）。用于侧栏显示 + Service Worker 更新提示。
-const APP_VERSION = 'v80';
+const APP_VERSION = 'v81';
 
 // 全局错误捕获：任何 JS 报错都显示到屏幕顶部红条，避免「点了没反应」却不知原因
 window.addEventListener('error', function (e) {
@@ -8608,9 +8608,11 @@ window.addEventListener('storage', function (e) {
 });
 
 // ===== 自动更新提示（解决“部署后旧标签页仍在跑旧代码、功能看不到”的反复问题）=====
-// 机制：周期性 / 标签页重新可见时，向服务器拉取最新 index.html 并提取其中的 APP_VERSION；
-//       若线上版本号比当前运行版本更高（说明已发布新版本），则弹出顶部横幅，点「立即刷新」一键更新。
-//       这样以后每次部署完，你只需在弹出的横幅上点一下，无需再手动硬刷新或重开。
+// 机制：周期性 / 标签页重新可见 / 获得焦点时，向服务器拉取最新版本号
+//       （优先读轻量 version.json；失败则回退到拉取 index.html 提取 APP_VERSION）；
+//       若线上版本号比当前运行版本更高（说明已发布新版本），则弹出顶部横幅，
+//       点「立即刷新」即可强制 Service Worker 接管新版本 + 带版本号硬刷新，无需手动折腾。
+//       这样以后每次部署完，你只需在弹出的横幅上点一下，就能立刻用上最新代码。
 let _updatePrompted = false;
 let _updateChecking = false;
 
@@ -8619,20 +8621,59 @@ function verNum(v) {
   return m ? parseInt(m[1], 10) : 0;
 }
 
+// 优先：读站点根目录的 version.json（体积最小、最可靠）
+async function fetchLatestVersionViaJson(ts) {
+  try {
+    const clean = location.href.split('#')[0].split('?')[0];
+    const root = clean.replace(/index\.html$/, '');
+    const res = await fetch(root + 'version.json?_=' + ts, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const j = await res.json();
+    return (j && j.version) ? j.version : null;
+  } catch (e) { return null; }
+}
+
+// 回退：直接拉 index.html 并用正则提取 APP_VERSION（老部署没有 version.json 时兜底）
+async function fetchLatestVersionViaHtml(ts) {
+  try {
+    const base = location.href.split('#')[0];
+    const url = base + (base.indexOf('?') >= 0 ? '&' : '?') + '_cv=' + ts;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const txt = await res.text();
+    const m = txt.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/);
+    return m ? m[1] : null;
+  } catch (e) { return null; }
+}
+
 function showVersionUpdateBanner(latest) {
   let b = document.getElementById('appUpdateBanner');
   if (b) return;
   b = document.createElement('div');
   b.id = 'appUpdateBanner';
+  b.setAttribute('role', 'alert');
   b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99998;background:linear-gradient(90deg,#7c4dff,#9b6dff);'
-    + 'color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;'
-    + 'font-size:14px;box-shadow:0 2px 10px rgba(0,0,0,.25)';
+    + 'color:#fff;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;'
+    + 'font-size:13.5px;line-height:1.3;box-shadow:0 2px 10px rgba(0,0,0,.25)';
   const span = document.createElement('span');
-  span.textContent = '🎉 已发布新版本（' + latest + '），点击刷新即可使用最新功能';
+  span.textContent = '🎉 已发布新版本（' + latest + '），点「立即刷新」即可使用最新功能';
+  span.style.cssText = 'flex:1 1 auto;min-width:0';
   const btn = document.createElement('button');
   btn.textContent = '立即刷新';
-  btn.style.cssText = 'background:#fff;color:#7c4dff;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-weight:700;margin-left:12px;flex:none';
-  btn.onclick = function () { location.reload(true); };
+  btn.style.cssText = 'background:#fff;color:#6a3df0;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-weight:700;margin-left:8px;flex:none;font-size:13px';
+  btn.onclick = function () {
+    // 1) 让等待中的 Service Worker 立即接管（确保离线壳也更新到新版本）
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+        navigator.serviceWorker.getRegistration().then(reg => {
+          if (reg && reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        });
+      }
+    } catch (_) {}
+    // 2) 带版本号 + 时间戳硬刷新，绕过一切 HTTP/SW 缓存
+    const base = location.href.split('?')[0].split('#')[0];
+    location.href = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'v=' + latest + '&t=' + Date.now();
+  };
   b.appendChild(span); b.appendChild(btn);
   document.body.appendChild(b);
 }
@@ -8641,14 +8682,9 @@ async function checkForAppUpdate() {
   if (_updatePrompted || _updateChecking || typeof document === 'undefined') return;
   _updateChecking = true;
   try {
-    const base = location.href.split('#')[0];
-    const url = base + (base.indexOf('?') >= 0 ? '&' : '?') + '_cv=' + Date.now();
-    const res = await fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
-    if (!res.ok) return;
-    const txt = await res.text();
-    const m = txt.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/);
-    if (!m) return;
-    const latest = m[1];
+    const ts = Date.now();
+    let latest = await fetchLatestVersionViaJson(ts);
+    if (!latest) latest = await fetchLatestVersionViaHtml(ts);
     if (latest && verNum(latest) > verNum(APP_VERSION)) {
       _updatePrompted = true;
       showVersionUpdateBanner(latest);
@@ -8688,8 +8724,8 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     // 注意：必须用「带版本号的文件名」注册。平台 CDN 会缓存旧的 sw.js，
     // 若沿用同一文件名，用户端永远拉不到新的 Service Worker（离线能力无法更新）。
-    // 每次升级 APP_VERSION 时，请同步创建/更新对应的 sw-vNN.js（当前 sw-v80.js）并改这里。
-    navigator.serviceWorker.register('./sw-v80.js').then(reg => {
+    // 每次升级 APP_VERSION 时，请同步创建/更新对应的 sw-vNN.js（当前 sw-v81.js）并改这里。
+    navigator.serviceWorker.register('./sw-v81.js').then(reg => {
       // 已有旧 SW 在控制页面，而新 SW 已就绪 → 提示更新
       if (reg.waiting && navigator.serviceWorker.controller) {
         showUpdateBanner();
@@ -8759,7 +8795,7 @@ window.IWApp = {
   <div class="lb-hint" data-page-node-id="k7S4jERrDovnAyUE08pV0r">双指捏合缩放 · 拖动平移 · 双击放大/还原 · 点空白处关闭</div>
 </div>
 
-<script src="iw-sync.js?v=80"></script>
+<script src="iw-sync.js?v=81"></script>
 <style>
 /* 主题切换控件：默认停靠右下角（避开顶部工具条），手机端上移到移动底部导航之上 */
 #dt-switch{position:fixed;right:14px;bottom:16px;z-index:2147483647;display:flex;gap:4px;padding:5px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.28)}
