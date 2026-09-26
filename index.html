@@ -3317,7 +3317,7 @@
 
 <script>
 // 当前版本号（每次发布递增）。用于侧栏显示 + Service Worker 更新提示。
-const APP_VERSION = 'v81';
+const APP_VERSION = 'v82';
 
 // 全局错误捕获：任何 JS 报错都显示到屏幕顶部红条，避免「点了没反应」却不知原因
 window.addEventListener('error', function (e) {
@@ -8724,8 +8724,8 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     // 注意：必须用「带版本号的文件名」注册。平台 CDN 会缓存旧的 sw.js，
     // 若沿用同一文件名，用户端永远拉不到新的 Service Worker（离线能力无法更新）。
-    // 每次升级 APP_VERSION 时，请同步创建/更新对应的 sw-vNN.js（当前 sw-v81.js）并改这里。
-    navigator.serviceWorker.register('./sw-v81.js').then(reg => {
+    // 每次升级 APP_VERSION 时，请同步创建/更新对应的 sw-vNN.js（当前 sw-v82.js）并改这里。
+    navigator.serviceWorker.register('./sw-v82.js').then(reg => {
       // 已有旧 SW 在控制页面，而新 SW 已就绪 → 提示更新
       if (reg.waiting && navigator.serviceWorker.controller) {
         showUpdateBanner();
@@ -8795,12 +8795,53 @@ window.IWApp = {
   <div class="lb-hint" data-page-node-id="k7S4jERrDovnAyUE08pV0r">双指捏合缩放 · 拖动平移 · 双击放大/还原 · 点空白处关闭</div>
 </div>
 
-<script src="iw-sync.js?v=81"></script>
+<script src="iw-sync.js?v=82"></script>
 <style>
 /* 主题切换控件：默认停靠右下角（避开顶部工具条），手机端上移到移动底部导航之上 */
-#dt-switch{position:fixed;right:14px;bottom:16px;z-index:2147483647;display:flex;gap:4px;padding:5px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.28)}
+#dt-switch{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2147483647;display:flex;gap:4px;padding:5px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.28);transition:left .18s ease,right .18s ease,opacity .18s ease}
 #dt-switch button{border:0;border-radius:9px;padding:7px 11px;font-size:13px;cursor:pointer;background:var(--card-bg);color:var(--text-main)}
-@media (max-width:768px){#dt-switch{bottom:16px;right:10px;padding:4px}#dt-switch button{padding:6px 9px;font-size:12px}}
+@media (max-width:768px){#dt-switch{bottom:calc(14px + env(safe-area-inset-bottom,0px));right:10px;padding:4px}#dt-switch button{padding:6px 9px;font-size:12px}}
+
+/* ===== @v82-modal-save-fix-start （移动端弹窗保存按钮被主题切换条遮挡的修复）=====
+   问题：移动端「编辑客户接待记录」弹窗的「保存记录」按钮位于右下，而主题切换条 #dt-switch
+        是 position:fixed + z-index:2147483647 的悬浮控件，任何页面元素都无法盖过它 → 按钮被压住点不到。
+   方案（三层，均为位置避让，不试图比拼 z-index）：
+     ① 任一弹窗打开时（body.modal-open，JS 同步 + :has() 兜底），切换条让位到【左下角】，与右下按钮彻底分区；
+     ② 客户弹窗在手机上自身可滚动，底部预留「切换条高度 + 安全区」空白，滚到底时按钮完整位于切换条上方；
+     ③ 行动按钮加高到 ≥46px 并等宽撑满，提升触控命中率。
+   标记供脚本精确剥离，勿删。 */
+@media (max-width: 768px) {
+  /* ① 弹窗打开时切换条让位到左下角（左下区域在客户弹窗内没有可点控件） */
+  body.modal-open #dt-switch { right: auto; left: 10px; opacity: .94; }
+  /* :has() 兜底：即使 JS 未执行也能避让（不支持的浏览器会忽略本条，无副作用） */
+  body:has(.modal-overlay.show) #dt-switch { right: auto; left: 10px; opacity: .94; }
+
+  /* ② 客户弹窗自身滚动 + 底部安全避让 */
+  .modal.client-modal {
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  /* 行动区吸底（让「保存记录」滚动过程中始终可见），并抬到切换条带之上 */
+  .client-modal .modal-actions {
+    position: sticky;
+    bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+    z-index: 5;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border);
+    margin: 14px -6px 0;
+    padding: 10px 6px 4px;
+  }
+  /* ③ 触控友好：两个按钮等宽撑满、加高 */
+  .client-modal .modal-actions .btn { flex: 1 1 0; min-height: 46px; font-size: 15px; }
+
+  /* 其余弹窗（历史/推荐房源等）也避免与切换条打架：底部留白 */
+  .modal:not(.client-modal) { scroll-margin-bottom: 96px; }
+}
+/* @v82-modal-save-fix-end */
 </style>
 <div id="dt-switch">
   <button data-t="system" title="跟随系统">系统</button>
@@ -8840,6 +8881,29 @@ window.IWApp = {
   var mq = matchMedia('(prefers-color-scheme: dark)');
   if(mq.addEventListener){ mq.addEventListener('change', function(){ if(cur()==='system') apply('system'); }); }
 })();
+</script>
+<script>
+/* @v82-modal-open-flag-start
+   弹窗打开时给 body 加 .modal-open，供 CSS 让主题切换条避让（移到左下角），
+   避免它挡住移动端右下角的「保存记录」按钮。标记勿删。 */
+(function(){
+  function sync(){
+    try{
+      var shown = document.querySelector('.modal-overlay.show');
+      document.body.classList.toggle('modal-open', !!shown);
+    }catch(_){}
+  }
+  try{
+    var mo = new MutationObserver(sync);
+    var ovs = document.querySelectorAll('.modal-overlay');
+    for (var i = 0; i < ovs.length; i++) mo.observe(ovs[i], { attributes: true, attributeFilter: ['class'] });
+  }catch(_){}
+  sync();
+  document.addEventListener('DOMContentLoaded', sync);
+  /* 兜底：极低频同步，覆盖运行时动态显示/隐藏（querySelector 开销极小） */
+  setInterval(sync, 1500);
+})();
+/* @v82-modal-open-flag-end */
 </script>
 </body>
 </html>
