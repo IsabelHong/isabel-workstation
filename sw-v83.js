@@ -1,9 +1,9 @@
-/* Isabel Work Station Service Worker v82
+/* Isabel Work Station Service Worker v83
  * 策略：网络优先 + 失败回退缓存；iw-sync.js 始终走网络（确保同步逻辑即时更新）。
- * 与 v81 策略一致，仅更新缓存名 / 资源版本号（强制打破旧版缓存）。
- * v82 变更：修复移动端弹窗「保存记录」按钮被主题切换条遮挡（切换条让位 + 底部避让 + 吸底行动区）。
+ * 与 v82 策略一致，仅更新缓存名 / 资源版本号（强制打破旧版缓存）。
+ * v83 变更：修复深色主题下「来访渠道 / 意向面积」选中态被深色 !important 覆写压掉（class 已加但视觉无变化）。
  */
-const CACHE = 'isabel-workstation-v82';
+const CACHE = 'isabel-workstation-v83';
 const ASSETS = [
   './',
   './index.html',
@@ -11,8 +11,8 @@ const ASSETS = [
   './icon-180-purple.png',
   './icon-192-purple.png',
   './icon-512-purple.png',
-  './iw-sync.js?v=82',
-  './sw-v82.js'
+  './iw-sync.js?v=83',
+  './sw-v83.js'
 ];
 
 const OFFLINE_HTML = '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'

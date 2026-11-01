@@ -2233,6 +2233,28 @@
   .dash-card.accent .dash-num { color: var(--primary) !important; }
   }
 
+  /* ===== @v83-state-fix-start =====
+     深色主题的「批量转深色」用的是 !important（见上方 `& .channel-pill, & .area-pill` 名单）。
+     !important 无视选择器权重，会把组件自身的选中态一起压掉：
+       .channel-pill.selected / .area-pill.selected 的 background / color / border-color 全部失效
+       → 点击后 class 明明加上了、状态也存进去了，但界面毫无变化（用户感知 = 「点击没反应」）。
+     修法：用更高权重 (0,3,0) + !important 把「选中态」单独立起来；未选中态的深色覆写保持不变。
+     深色下 --primary 是浅金 #e3c68c，故文字改深色 #283040 以保证对比度（原 #fff 在浅金上几乎看不清）。
+     同类隐患一并修：.task-checkbox.checked 的绿色勾选底同样被这份 !important 压掉。
+     ===== */
+  [data-theme="dark"] .channel-pill.selected,
+  [data-theme="dark"] .area-pill.selected {
+    background: var(--primary) !important;
+    color: #283040 !important;
+    border-color: var(--primary) !important;
+    font-weight: 600;
+  }
+  [data-theme="dark"] .task-checkbox.checked {
+    background: var(--success) !important;
+    border-color: var(--success) !important;
+  }
+  /* ===== @v83-state-fix-end ===== */
+
   /* @v80-mobile-start （此标记供改前/改后对比脚本精确剥离，勿删） */
   /* ===================================================================
      手机端「客户接待拆解」布局优化（v80）
@@ -3317,7 +3339,7 @@
 
 <script>
 // 当前版本号（每次发布递增）。用于侧栏显示 + Service Worker 更新提示。
-const APP_VERSION = 'v82';
+const APP_VERSION = 'v83';
 
 // 全局错误捕获：任何 JS 报错都显示到屏幕顶部红条，避免「点了没反应」却不知原因
 window.addEventListener('error', function (e) {
@@ -8724,8 +8746,8 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     // 注意：必须用「带版本号的文件名」注册。平台 CDN 会缓存旧的 sw.js，
     // 若沿用同一文件名，用户端永远拉不到新的 Service Worker（离线能力无法更新）。
-    // 每次升级 APP_VERSION 时，请同步创建/更新对应的 sw-vNN.js（当前 sw-v82.js）并改这里。
-    navigator.serviceWorker.register('./sw-v82.js').then(reg => {
+    // 每次升级 APP_VERSION 时，请同步创建/更新对应的 sw-vNN.js（当前 sw-v83.js）并改这里。
+    navigator.serviceWorker.register('./sw-v83.js').then(reg => {
       // 已有旧 SW 在控制页面，而新 SW 已就绪 → 提示更新
       if (reg.waiting && navigator.serviceWorker.controller) {
         showUpdateBanner();
@@ -8795,7 +8817,7 @@ window.IWApp = {
   <div class="lb-hint" data-page-node-id="k7S4jERrDovnAyUE08pV0r">双指捏合缩放 · 拖动平移 · 双击放大/还原 · 点空白处关闭</div>
 </div>
 
-<script src="iw-sync.js?v=82"></script>
+<script src="iw-sync.js?v=83"></script>
 <style>
 /* 主题切换控件：默认停靠右下角（避开顶部工具条），手机端上移到移动底部导航之上 */
 #dt-switch{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2147483647;display:flex;gap:4px;padding:5px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.28);transition:left .18s ease,right .18s ease,opacity .18s ease}
