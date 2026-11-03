@@ -28,6 +28,7 @@
 </script>
 <style>
   :root {
+    color-scheme: light;
     --bg: #faf5f7;
     --card-bg: #ffffff;
     --sidebar-bg: #f7eef1;
@@ -1615,6 +1616,7 @@
   .modal-field input, .modal-field textarea, .modal-field select {
     width: 100%; padding: 10px 12px; border: 1px solid var(--border);
     border-radius: var(--radius-sm); font-size: 14px; outline: none; font-family: inherit;
+    background: var(--input-bg); color: var(--text-main);
   }
   .modal-field input:focus, .modal-field textarea:focus, .modal-field select:focus { border-color: var(--primary); }
   .modal-field textarea { resize: vertical; min-height: 80px; }
@@ -2052,6 +2054,7 @@
      深色变量 + 表面覆写一并放入本作用域。
      ============================================================ */
   [data-theme="dark"] {
+    color-scheme: dark;
     /* ===== 深色变量（浅2号）===== */
     --bg: #283040;
     --card-bg: #2f3846;
@@ -2088,7 +2091,7 @@
   /* 表单控件（全局） */
   input[type="text"], input[type="number"], input[type="date"],
   input[type="datetime-local"], input[type="email"], input[type="password"],
-  input[type="search"], input[type="url"], select, textarea {
+  input[type="tel"], input[type="search"], input[type="url"], select, textarea {
     background: var(--input-bg) !important;
     color: var(--text-main) !important;
     border-color: var(--border) !important;
@@ -3339,7 +3342,7 @@
 
 <script>
 // 当前版本号（每次发布递增）。用于侧栏显示 + Service Worker 更新提示。
-const APP_VERSION = 'v83';
+const APP_VERSION = 'v84';
 
 // 全局错误捕获：任何 JS 报错都显示到屏幕顶部红条，避免「点了没反应」却不知原因
 window.addEventListener('error', function (e) {
@@ -8746,8 +8749,8 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     // 注意：必须用「带版本号的文件名」注册。平台 CDN 会缓存旧的 sw.js，
     // 若沿用同一文件名，用户端永远拉不到新的 Service Worker（离线能力无法更新）。
-    // 每次升级 APP_VERSION 时，请同步创建/更新对应的 sw-vNN.js（当前 sw-v83.js）并改这里。
-    navigator.serviceWorker.register('./sw-v83.js').then(reg => {
+    // 每次升级 APP_VERSION 时，请同步创建/更新对应的 sw-vNN.js（当前 sw-v84.js）并改这里。
+    navigator.serviceWorker.register('./sw-v84.js').then(reg => {
       // 已有旧 SW 在控制页面，而新 SW 已就绪 → 提示更新
       if (reg.waiting && navigator.serviceWorker.controller) {
         showUpdateBanner();
@@ -8817,7 +8820,7 @@ window.IWApp = {
   <div class="lb-hint" data-page-node-id="k7S4jERrDovnAyUE08pV0r">双指捏合缩放 · 拖动平移 · 双击放大/还原 · 点空白处关闭</div>
 </div>
 
-<script src="iw-sync.js?v=83"></script>
+<script src="iw-sync.js?v=84"></script>
 <style>
 /* 主题切换控件：默认停靠右下角（避开顶部工具条），手机端上移到移动底部导航之上 */
 #dt-switch{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2147483647;display:flex;gap:4px;padding:5px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.28);transition:left .18s ease,right .18s ease,opacity .18s ease}

@@ -1,9 +1,9 @@
-/* Isabel Work Station Service Worker v83
+/* Isabel Work Station Service Worker v84
  * 策略：网络优先 + 失败回退缓存；iw-sync.js 始终走网络（确保同步逻辑即时更新）。
- * 与 v82 策略一致，仅更新缓存名 / 资源版本号（强制打破旧版缓存）。
- * v83 变更：修复深色主题下「来访渠道 / 意向面积」选中态被深色 !important 覆写压掉（class 已加但视觉无变化）。
+ * 与 v83 策略一致，仅更新缓存名 / 资源版本号（强制打破旧版缓存）。
+ * v84 变更：修复弹窗输入框/复选框在浅色主题下退回原生深色控件（color-scheme 未跟随主题 + 基础规则缺背景着色 + 深色覆写漏 input[type="tel"]）。
  */
-const CACHE = 'isabel-workstation-v83';
+const CACHE = 'isabel-workstation-v84';
 const ASSETS = [
   './',
   './index.html',
@@ -11,8 +11,8 @@ const ASSETS = [
   './icon-180-purple.png',
   './icon-192-purple.png',
   './icon-512-purple.png',
-  './iw-sync.js?v=83',
-  './sw-v83.js'
+  './iw-sync.js?v=84',
+  './sw-v84.js'
 ];
 
 const OFFLINE_HTML = '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
